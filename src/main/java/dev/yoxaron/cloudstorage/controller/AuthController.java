@@ -2,20 +2,24 @@ package dev.yoxaron.cloudstorage.controller;
 
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
+import dev.yoxaron.cloudstorage.exception.UnauthorizedException;
 import dev.yoxaron.cloudstorage.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,9 +55,23 @@ public class AuthController {
                 .body(new UserAuthResponseDto(dto.username()));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<UserAuthResponseDto> me(Principal principal) {
-        return ResponseEntity.ok(new UserAuthResponseDto(principal.getName()));
+    @PostMapping("/sign-out")
+    public ResponseEntity<Void> signOut(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            throw new UnauthorizedException("Not authenticated");
+        }
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.noContent().build();
     }
 
     private void createSecurityContext(

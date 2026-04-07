@@ -2,6 +2,7 @@ package dev.yoxaron.cloudstorage.service;
 
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.entity.User;
+import dev.yoxaron.cloudstorage.exception.UserAlreadyExistsException;
 import dev.yoxaron.cloudstorage.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class UserService {
     @Transactional
     public void register(UserAuthRequestDto user) {
         if (userRepository.findByUsername(user.username()).isPresent()) {
-            throw new RuntimeException("Username is already in use"); //todo custom exception
+            throw new UserAlreadyExistsException("Username is already in use");
         }
 
         User userToSave = User.builder()
