@@ -15,3 +15,8 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     default-schema: public
     drop-first: false
+minio:
+  endpoint: http://localhost:9000
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket-name: ${MINIO_BUCKET_NAME}
