@@ -1,6 +1,7 @@
 package dev.yoxaron.cloudstorage.controller.advice;
 
 import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
+import dev.yoxaron.cloudstorage.exception.InvalidPathException;
 import dev.yoxaron.cloudstorage.exception.UnauthorizedException;
 import dev.yoxaron.cloudstorage.exception.UserAlreadyExistsException;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handleBadCredentialsException(BadCredentialsException ex) {
         return  ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPathException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidPathException(InvalidPathException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
