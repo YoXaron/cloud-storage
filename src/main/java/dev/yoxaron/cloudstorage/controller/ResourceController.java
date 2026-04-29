@@ -3,29 +3,48 @@ package dev.yoxaron.cloudstorage.controller;
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
-import dev.yoxaron.cloudstorage.service.ResourceService;
+import dev.yoxaron.cloudstorage.service.ResourceMetadataService;
+import dev.yoxaron.cloudstorage.service.StorageService;
 import dev.yoxaron.cloudstorage.utils.PathUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/resource")
 @RequiredArgsConstructor
 public class ResourceController {
 
-    private final ResourceService resourceService;
+    private final StorageService storageService;
+    private final ResourceMetadataService resourceMetadataService;
 
     @GetMapping
-    public ResponseEntity<ResourceResponseDto> getResourceInfo(@RequestParam("path") String path,
-                                                               @AuthenticationPrincipal SecurityUser user) {
+    public ResponseEntity<ResourceResponseDto> getResourceInfo(
+            @RequestParam("path") String path,
+            @AuthenticationPrincipal SecurityUser user
+    ) {
         ParsedPath parsedPath = PathUtil.validateAndParse(path);
 
         return ResponseEntity.ok()
-                .body(resourceService.getResourceInfo(parsedPath.path(), parsedPath.name(), user.getId()));
+                .body(resourceMetadataService.getResourceInfo(parsedPath.path(), parsedPath.name(), user.getId()));
+    }
+
+    @PostMapping
+    public ResponseEntity<List<ResourceResponseDto>> uploadResources(
+            @RequestParam("path") String path,
+            @RequestParam("object") List<MultipartFile> files,
+            @AuthenticationPrincipal SecurityUser user
+    ) {
+        PathUtil.validate(path);
+
+        List<ResourceResponseDto> uploadedFiles = storageService.uploadAll(path, files, user.getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(uploadedFiles);
     }
 }

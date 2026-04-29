@@ -2,7 +2,12 @@ package dev.yoxaron.cloudstorage.utils;
 
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.exception.InvalidPathException;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class PathUtil {
@@ -14,11 +19,11 @@ public class PathUtil {
         return parse(path);
     }
 
-    private static void validate(String path) {
+    public static void validate(String path) {
         if (path == null || path.isBlank()) {
             throw new InvalidPathException("Path cannot be empty");
         }
-        if (!path.startsWith("/")) {
+        if (!path.startsWith("/") && path.endsWith("/")) {
             throw new InvalidPathException("Path must start with '/'");
         }
         if (path.contains("//")) {
@@ -32,7 +37,9 @@ public class PathUtil {
         }
     }
 
-    private static ParsedPath parse(String path) {
+    //todo проверить что в имени файла нет /
+
+    public static ParsedPath parse(String path) {
         if ("/".equals(path)) {
             return new ParsedPath("/", "/", true);
         }
@@ -45,5 +52,25 @@ public class PathUtil {
         String name = normalizedPath.substring(lastSlashIdx + 1);
 
         return new ParsedPath(parentPath, name, isDirectory);
+    }
+
+    public static Set<String> extractUniqueFilePaths(String path, List<MultipartFile> files) {
+        Set<String> uniquePaths = new HashSet<>();
+        for (MultipartFile file : files) {
+            String fileName = file.getOriginalFilename(); //todo может вернуть null
+            String fileRelativePath = PathUtil.validateAndParse(fileName).path(); //todo имя файла начинается не с /
+            String fileAbsolutePath = path + fileRelativePath;
+            uniquePaths.add(fileAbsolutePath);
+        }
+        return uniquePaths;
+    }
+
+    public static List<ParsedPath> validateAndParseUniquePaths(Set<String> paths) {
+        List<ParsedPath> parsedPaths = new ArrayList<>();
+        for (String path : paths) {
+            ParsedPath parsedPath = validateAndParse(path);
+            parsedPaths.add(parsedPath);//todo вызывается второй раз за метод
+        }
+        return parsedPaths;
     }
 }
