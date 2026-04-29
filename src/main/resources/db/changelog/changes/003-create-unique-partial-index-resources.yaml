@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-unique-partial-index-resources
+      author: yoxaron
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX uq_resource_not_failed
+              ON resources (user_id, path, name)
+              WHERE status IS DISTINCT FROM 'FAILED';
