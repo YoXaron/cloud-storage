@@ -65,6 +65,10 @@ public class PathUtil {
         return uniquePaths;
     }
 
+    public static String getPrefix(ParsedPath parsedPath) {
+        return parsedPath.path() + parsedPath.name() + "/";
+    }
+
     public static List<ParsedPath> validateAndParseUniquePaths(Set<String> paths) {
         List<ParsedPath> parsedPaths = new ArrayList<>();
         for (String path : paths) {

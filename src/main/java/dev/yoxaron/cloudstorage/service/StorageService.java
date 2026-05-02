@@ -45,13 +45,25 @@ public class StorageService {
                 createdResourceDtos.add(createdResourceDto);
             }
         } catch (Exception e) {
-            resourceMetadataService.markAsFailed(uploadingUUIDs);
+            resourceMetadataService.markAsFailed(uploadingUUIDs, userId);
             resourceMetadataService.deleteAllResources(createdDirectories);
             throw new UploadingFailedException("Uploading failed: " + e.getMessage());
         }
 
-        resourceMetadataService.updateStatuses(uploadingUUIDs, ResourceStatus.READY);
+        resourceMetadataService.updateStatuses(uploadingUUIDs, ResourceStatus.READY, userId);
         return createdResourceDtos;
+    }
+
+    public void deleteResource(String path, Long userId) {
+        ParsedPath parsedPath = validateAndParse(path);
+        resourceMetadataService.getResourceInfo(parsedPath.path(), parsedPath.name(), userId);
+
+        String prefix = getPrefix(parsedPath);
+        if (parsedPath.isDirectory()) {
+            resourceMetadataService.deleteDirectory(parsedPath, prefix, userId);
+        } else {
+            resourceMetadataService.markAsDeleted(parsedPath, userId);
+        }
     }
 
     private List<Resource> createNewDirectories(String path, List<MultipartFile> files, Long userId) {

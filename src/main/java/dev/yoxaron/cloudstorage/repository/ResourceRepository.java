@@ -18,13 +18,42 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     Optional<Resource> findResourceByPathAndNameAndUserId(String path, String name, Long userId);
 
     @Modifying
-    @Query("update Resource r set r.status = :status where r.uuid in (:uuids)")
-    int updateStatuses(@Param("uuids") List<UUID> uuids, @Param("status") ResourceStatus status);
+    @Query("update Resource r set r.status = :status where r.uuid in (:uuids) and r.userId = :userId")
+    void updateStatuses(@Param("uuids") List<UUID> uuids,
+                        @Param("status") ResourceStatus status,
+                        @Param("userId") Long userId);
 
     @Modifying
-    @Query(value = "update Resource r set r.status = :status where r.uuid = :uuid")
-    int updateStatus(@Param("uuid") UUID uuid, @Param("status") ResourceStatus status);
+    @Query("update Resource r set r.status = :status where r.uuid = :uuid and r.userId = :userId")
+    void updateStatus(@Param("uuid") UUID uuid,
+                      @Param("status") ResourceStatus status,
+                      @Param("userId") Long userId);
 
     @Modifying
     void deleteAllByUuidIn(List<UUID> uuid);
+
+    @Modifying
+    @Query("delete from Resource r where r.path = :path " +
+            "and r.name = :name " +
+            "and r.type = 'DIRECTORY' " +
+            "and r.userId = :userId")
+    void deleteDirectory(@Param("path") String path,
+                         @Param("name") String name,
+                         @Param("userId") Long userId);
+
+
+    @Modifying
+    @Query("delete from Resource r where r.path like concat(:prefix, '%') " +
+            "and r.type = 'DIRECTORY' " +
+            "and r.userId = :userId")
+    void deleteNestedDirectories(@Param("prefix") String prefix,
+                                 @Param("userId") Long userId);
+
+    @Modifying
+    @Query("update Resource r set r.status = 'DELETED' " +
+            "where r.path like concat(:prefix, '%') " +
+            "and r.type = 'FILE' " +
+            "and r.userId = :userId")
+    void markAllFilesAsDeleted(@Param("prefix") String prefix,
+                               @Param("userId") Long userId);
 }

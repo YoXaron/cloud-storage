@@ -65,6 +65,27 @@ public class ResourceMetadataService {
     }
 
     @Transactional
+    public void markAsDeleted(ParsedPath parsedPath, Long userId) {
+        Optional<Resource> maybeResource = resourceRepository.findResourceByPathAndNameAndUserId(
+                parsedPath.path(), parsedPath.name(), userId);
+
+        if (maybeResource.isPresent()) {
+            Resource resource = maybeResource.get();
+            resourceRepository.updateStatus(resource.getUuid(), ResourceStatus.DELETED, userId);
+        } else {
+            throw new ResourceNotFoundException(
+                    "Resource with path %s and name %s not found".formatted(parsedPath.path(), parsedPath.name()));
+        }
+    }
+
+    @Transactional
+    public void deleteDirectory(ParsedPath parsedPath, String prefix, Long userId) {
+        resourceRepository.deleteDirectory(parsedPath.path(), parsedPath.name(), userId);
+        resourceRepository.deleteNestedDirectories(prefix, userId);
+        resourceRepository.markAllFilesAsDeleted(prefix, userId);
+    }
+
+    @Transactional
     public ResourceResponseDto saveUploadingMetadata(ParsedPath parsedPath, UUID uuid, long size, Long userId) {
         Resource resourceToSave = Resource.builder()
                 .path(parsedPath.path())
@@ -81,12 +102,13 @@ public class ResourceMetadataService {
     }
 
     @Transactional
-    public int updateStatuses(List<UUID> uuids, ResourceStatus status) {
-        return resourceRepository.updateStatuses(uuids, status);
+    public void updateStatuses(List<UUID> uuids, ResourceStatus status, Long userId) {
+        resourceRepository.updateStatuses(uuids, status, userId);
     }
 
+
     @Transactional
-    public void markAsFailed(List<UUID> uuids) {
-        resourceRepository.updateStatuses(uuids, ResourceStatus.FAILED);
+    public void markAsFailed(List<UUID> uuids, Long userId) {
+        resourceRepository.updateStatuses(uuids, ResourceStatus.FAILED, userId);
     }
 }

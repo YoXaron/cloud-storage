@@ -47,4 +47,13 @@ public class ResourceController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(uploadedFiles);
     }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteResource(
+            @RequestParam("path") String path,
+            @AuthenticationPrincipal SecurityUser user
+    ) {
+        storageService.deleteResource(path, user.getId());
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }
