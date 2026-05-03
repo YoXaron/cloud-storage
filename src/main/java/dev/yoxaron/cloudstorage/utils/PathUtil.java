@@ -37,8 +37,6 @@ public class PathUtil {
         }
     }
 
-    //todo проверить что в имени файла нет /
-
     public static ParsedPath parse(String path) {
         if ("/".equals(path)) {
             return new ParsedPath("/", "/", true);

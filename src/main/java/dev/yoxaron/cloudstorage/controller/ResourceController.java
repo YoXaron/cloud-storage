@@ -2,6 +2,7 @@ package dev.yoxaron.cloudstorage.controller;
 
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
+import dev.yoxaron.cloudstorage.exception.InvalidSearchQueryException;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
 import dev.yoxaron.cloudstorage.service.ResourceMetadataService;
 import dev.yoxaron.cloudstorage.service.StorageService;
@@ -55,5 +56,17 @@ public class ResourceController {
     ) {
         storageService.deleteResource(path, user.getId());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ResourceResponseDto>> search(
+            @RequestParam("query") String query,
+            @AuthenticationPrincipal SecurityUser user
+    ) {
+        if (query.isBlank()) {
+            throw new InvalidSearchQueryException("Search query must not be empty");
+        }
+
+        return ResponseEntity.ok(resourceMetadataService.search(query, user.getId()));
     }
 }

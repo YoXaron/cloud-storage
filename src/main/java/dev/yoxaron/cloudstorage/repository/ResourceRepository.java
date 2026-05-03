@@ -41,7 +41,6 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
                          @Param("name") String name,
                          @Param("userId") Long userId);
 
-
     @Modifying
     @Query("delete from Resource r where r.path like concat(:prefix, '%') " +
             "and r.type = 'DIRECTORY' " +
@@ -56,4 +55,11 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
             "and r.userId = :userId")
     void markAllFilesAsDeleted(@Param("prefix") String prefix,
                                @Param("userId") Long userId);
+
+    @Query("select r from Resource r " +
+            "where lower(r.name) like lower(concat('%', :query, '%')) " +
+            "and r.status = 'READY' " +
+            "and r.userId = :userId")
+    List<Resource> findAllByQueryAndUserId(@Param("query") String query,
+                                           @Param("userId") Long userId);
 }

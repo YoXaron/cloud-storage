@@ -111,4 +111,10 @@ public class ResourceMetadataService {
     public void markAsFailed(List<UUID> uuids, Long userId) {
         resourceRepository.updateStatuses(uuids, ResourceStatus.FAILED, userId);
     }
+
+    public List<ResourceResponseDto> search(String query, Long userId) {
+        return resourceRepository.findAllByQueryAndUserId(query, userId).stream()
+                .map(resourceMapper::toResourceDto)
+                .toList();
+    }
 }
