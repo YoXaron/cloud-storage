@@ -5,6 +5,7 @@ import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
 import dev.yoxaron.cloudstorage.entity.ResourceType;
+import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.ResourceNotFoundException;
 import dev.yoxaron.cloudstorage.mapper.ResourceMapper;
 import dev.yoxaron.cloudstorage.repository.ResourceRepository;
@@ -37,18 +38,43 @@ public class ResourceMetadataService {
         return resourceMapper.toResourceDto(maybeResource.get());
     }
 
+    public List<ResourceResponseDto> getDirectoryContents(String prefix, Long userId) {
+        return resourceRepository.findAllByPathAndUserId(prefix, userId).stream()
+                .map(resourceMapper::toResourceDto)
+                .toList();
+    }
+
     @Transactional
-    public List<Resource> upsertAllDirectories(List<ParsedPath> paths, Long userId) {
-        //todo N+1
+    public ResourceResponseDto createDirectory(ParsedPath parsedPath, Long userId) {
+        Optional<Resource> maybeResource =
+                resourceRepository.findResourceByPathAndNameAndUserId(parsedPath.path(), parsedPath.name(), userId);
+
+        if (maybeResource.isPresent()) {
+            throw new ResourceAlreadyExistsException("Directory already exists");
+        }
+
+        Resource directoryToSave = Resource.builder()
+                .path(parsedPath.path())
+                .name(parsedPath.name())
+                .userId(userId)
+                .type(ResourceType.DIRECTORY)
+                .build();
+
+        return resourceMapper.toResourceDto(resourceRepository.save(directoryToSave));
+    }
+
+    @Transactional
+    public List<Resource> upsertAllDirectories(List<ParsedPath> parsedPaths, Long userId) {
         List<Resource> createdDirectories = new ArrayList<>();
-        for (ParsedPath path : paths) {
+
+        for (ParsedPath parsedPath : parsedPaths) {
             Optional<Resource> maybeDirectory =
-                    resourceRepository.findResourceByPathAndNameAndUserId(path.path(), path.name(), userId);
+                    resourceRepository.findResourceByPathAndNameAndUserId(parsedPath.path(), parsedPath.name(), userId);
 
             if (maybeDirectory.isEmpty()) {
                 Resource directoryToSave = Resource.builder()
-                        .path(path.path())
-                        .name(path.name())
+                        .path(parsedPath.path())
+                        .name(parsedPath.name())
                         .userId(userId)
                         .type(ResourceType.DIRECTORY)
                         .build();

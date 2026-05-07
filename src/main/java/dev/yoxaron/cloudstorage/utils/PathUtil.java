@@ -19,6 +19,16 @@ public class PathUtil {
         return parse(path);
     }
 
+    public static ParsedPath validateAndParseDirectory(String path) {
+        ParsedPath parsedPath = validateAndParse(path);
+
+        if (!parsedPath.isDirectory()) {
+            throw new InvalidPathException("Path must end with /");
+        }
+
+        return parsedPath;
+    }
+
     public static void validate(String path) {
         if (path == null || path.isBlank()) {
             throw new InvalidPathException("Path cannot be empty");
@@ -56,7 +66,7 @@ public class PathUtil {
         Set<String> uniquePaths = new HashSet<>();
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename(); //todo может вернуть null
-            String fileRelativePath = PathUtil.validateAndParse(fileName).path(); //todo имя файла начинается не с /
+            String fileRelativePath = PathUtil.validateAndParse(fileName).path();
             String fileAbsolutePath = path + fileRelativePath;
             uniquePaths.add(fileAbsolutePath);
         }
@@ -64,6 +74,9 @@ public class PathUtil {
     }
 
     public static String getPrefix(ParsedPath parsedPath) {
+        if (parsedPath.path().equals("/") && parsedPath.name().equals("/")) {
+            return "/";
+        }
         return parsedPath.path() + parsedPath.name() + "/";
     }
 

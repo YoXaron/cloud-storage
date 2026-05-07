@@ -21,10 +21,9 @@ public class MinioService {
     private final MinioProperties minioProperties;
 
     public void upload(MultipartFile file, UUID uuid, Long userId) {
-        //minio client upload
         try {
             String objectName = USER_FILES_PREFIX.formatted(userId) + uuid.toString();
-            log.info("uploading to minio {}", objectName);
+
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(minioProperties.bucketName())
@@ -33,10 +32,9 @@ public class MinioService {
                             .contentType(file.getContentType())
                             .build()
             );
-
-            log.info("file successfully uploaded");
+            log.info("file {} successfully uploaded", objectName);
         } catch (Exception e) {
-            log.info("minio uploading error {}", e.getMessage());
+            log.error("minio uploading error {}", e.getMessage());
             throw new RuntimeException("Failed to upload to minio", e); //todo
         }
     }

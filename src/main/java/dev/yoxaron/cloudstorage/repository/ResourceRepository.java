@@ -17,6 +17,8 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     Optional<Resource> findResourceByPathAndNameAndUserId(String path, String name, Long userId);
 
+    List<Resource> findAllByPathAndUserId(String path, Long userId);
+
     @Modifying
     @Query("update Resource r set r.status = :status where r.uuid in (:uuids) and r.userId = :userId")
     void updateStatuses(@Param("uuids") List<UUID> uuids,

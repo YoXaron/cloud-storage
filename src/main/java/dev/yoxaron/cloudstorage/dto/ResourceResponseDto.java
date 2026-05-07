@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record ResourceResponseDto(
         String path,
         String name,
-        long size,
+        Long size,
         String type
 ) {
 }
