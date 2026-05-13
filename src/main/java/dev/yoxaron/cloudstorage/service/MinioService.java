@@ -1,6 +1,7 @@
 package dev.yoxaron.cloudstorage.service;
 
 import dev.yoxaron.cloudstorage.config.MinioProperties;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
@@ -36,6 +38,22 @@ public class MinioService {
         } catch (Exception e) {
             log.error("minio uploading error {}", e.getMessage());
             throw new RuntimeException("Failed to upload to minio", e); //todo
+        }
+    }
+
+    public InputStream getObjectAsStream(UUID uuid, Long userId) {
+        String objectName = USER_FILES_PREFIX.formatted(userId) + uuid.toString();
+
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(minioProperties.bucketName())
+                            .object(objectName)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("failed to receive InputStream from minio");
+            throw new RuntimeException("Failed to receive InputStream from MinIO", e);
         }
     }
 }

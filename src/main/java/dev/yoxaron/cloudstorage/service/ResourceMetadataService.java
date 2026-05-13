@@ -27,7 +27,7 @@ public class ResourceMetadataService {
     private final ResourceRepository resourceRepository;
     private final ResourceMapper resourceMapper;
 
-    public ResourceResponseDto getResourceInfo(String path, String name, Long userId) {
+    public Resource getResource(String path, String name, Long userId) {
         Optional<Resource> maybeResource =
                 resourceRepository.findResourceByPathAndNameAndUserId(path, name, userId);
 
@@ -35,7 +35,22 @@ public class ResourceMetadataService {
             throw new ResourceNotFoundException("Resource not found");
         }
 
-        return resourceMapper.toResourceDto(maybeResource.get());
+        return maybeResource.get();
+    }
+
+    public ResourceResponseDto getResourceInfo(String path, String name, Long userId) {
+        return resourceMapper.toResourceDto(getResource(path, name, userId));
+    }
+
+    public List<Resource> getAllFilesByPrefix(String prefix, Long userId) {
+        List<Resource> resources =
+                resourceRepository.findAllByPathStartingWithAndTypeAndUserId(prefix, ResourceType.FILE, userId);
+
+        if (resources.isEmpty()) {
+            throw new ResourceNotFoundException("Folder is empty");
+        }
+
+        return resources;
     }
 
     public List<ResourceResponseDto> getDirectoryContents(String prefix, Long userId) {

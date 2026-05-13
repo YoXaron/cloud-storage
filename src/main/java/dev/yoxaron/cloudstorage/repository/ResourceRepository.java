@@ -2,6 +2,7 @@ package dev.yoxaron.cloudstorage.repository;
 
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
+import dev.yoxaron.cloudstorage.entity.ResourceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,8 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     Optional<Resource> findResourceByPathAndNameAndUserId(String path, String name, Long userId);
 
     List<Resource> findAllByPathAndUserId(String path, Long userId);
+
+    List<Resource> findAllByPathStartingWithAndTypeAndUserId(String path, ResourceType type, Long userId);
 
     @Modifying
     @Query("update Resource r set r.status = :status where r.uuid in (:uuids) and r.userId = :userId")

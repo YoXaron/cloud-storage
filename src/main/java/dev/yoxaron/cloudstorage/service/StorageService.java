@@ -8,12 +8,18 @@ import dev.yoxaron.cloudstorage.exception.UploadingFailedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static dev.yoxaron.cloudstorage.utils.PathUtil.*;
 
@@ -52,6 +58,29 @@ public class StorageService {
 
         resourceMetadataService.updateStatuses(uploadingUUIDs, ResourceStatus.READY, userId);
         return createdResourceDtos;
+    }
+
+    public InputStream getFileAsStream(ParsedPath parsedPath, Long userId) {
+        Resource resource = resourceMetadataService.getResource(parsedPath.path(), parsedPath.name(), userId);
+        return minioService.getObjectAsStream(resource.getUuid(), userId);
+    }
+
+    public StreamingResponseBody getZipAsStream(ParsedPath parsedPath, Long userId) {
+        String prefix = getPrefix(parsedPath);
+        List<Resource> resources = resourceMetadataService.getAllFilesByPrefix(prefix, userId);
+
+        return outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
+                for (Resource resource : resources) {
+                    InputStream inputStream = minioService.getObjectAsStream(resource.getUuid(), userId);
+                    String resourceName = resource.getPath() + resource.getName();
+                    String entryName =  resourceName.substring(prefix.length());
+                    zipOut.putNextEntry(new ZipEntry(entryName));
+                    StreamUtils.copy(inputStream, zipOut);
+                    zipOut.closeEntry();
+                }
+            }
+        };
     }
 
     public void deleteResource(String path, Long userId) {
