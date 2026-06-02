@@ -18,7 +18,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void register(UserAuthRequestDto user) {
+    public User register(UserAuthRequestDto user) {
         if (userRepository.findByUsername(user.username()).isPresent()) {
             throw new UserAlreadyExistsException("Username is already in use");
         }
@@ -28,6 +28,6 @@ public class UserService {
                 .password(passwordEncoder.encode(user.password()))
                 .build();
 
-        userRepository.save(userToSave);
+        return userRepository.save(userToSave);
     }
 }
