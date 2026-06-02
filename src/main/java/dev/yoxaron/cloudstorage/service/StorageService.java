@@ -4,6 +4,9 @@ import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
+import dev.yoxaron.cloudstorage.entity.ResourceType;
+import dev.yoxaron.cloudstorage.exception.InvalidPathException;
+import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.UploadingFailedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +35,11 @@ public class StorageService {
     private final MinioService minioService;
 
     public List<ResourceResponseDto> uploadAll(String path, List<MultipartFile> files, Long userId) {
-        List<Resource> createdDirectories = createNewDirectories(path, files, userId);
+        if (!resourceMetadataService.isDirectoryExists(path, userId)) {
+            throw new InvalidPathException("Destination directory does not exist");
+        }
+
+        List<Resource> createdDirectories = createNewRelativeDirectories(path, files, userId);
 
         List<UUID> uploadingUUIDs = new ArrayList<>();
         List<ResourceResponseDto> createdResourceDtos = new ArrayList<>();
@@ -40,6 +47,13 @@ public class StorageService {
         try {
             for (MultipartFile file : files) {
                 ParsedPath parsedPath = parse(path + file.getOriginalFilename());
+
+                boolean fileExists = resourceMetadataService.isFileExists(
+                        parsedPath.path(), parsedPath.name(), ResourceStatus.READY, userId);
+
+                if (fileExists) {
+                    throw new ResourceAlreadyExistsException("Resource already exists: " + parsedPath.name());
+                }
 
                 UUID uuid = UUID.randomUUID();
                 uploadingUUIDs.add(uuid);
@@ -50,9 +64,11 @@ public class StorageService {
                 minioService.upload(file, uuid, userId);
                 createdResourceDtos.add(createdResourceDto);
             }
+        } catch (ResourceAlreadyExistsException e) {
+            rollback(uploadingUUIDs, createdDirectories, userId);
+            throw e;
         } catch (Exception e) {
-            resourceMetadataService.markAsFailed(uploadingUUIDs, userId);
-            resourceMetadataService.deleteAllResources(createdDirectories);
+            rollback(uploadingUUIDs, createdDirectories, userId);
             throw new UploadingFailedException("Uploading failed: " + e.getMessage());
         }
 
@@ -60,8 +76,14 @@ public class StorageService {
         return createdResourceDtos;
     }
 
+    private void rollback(List<UUID> uploadingUUIDs, List<Resource> createdDirectories, Long userId) {
+        resourceMetadataService.updateStatuses(uploadingUUIDs, ResourceStatus.FAILED, userId);
+        resourceMetadataService.deleteAllResources(createdDirectories);
+    }
+
     public InputStream getFileAsStream(ParsedPath parsedPath, Long userId) {
-        Resource resource = resourceMetadataService.getResource(parsedPath.path(), parsedPath.name(), userId);
+        Resource resource =
+                resourceMetadataService.getResource(parsedPath.path(), parsedPath.name(), ResourceType.FILE, userId);
         return minioService.getObjectAsStream(resource.getUuid(), userId);
     }
 
@@ -74,7 +96,7 @@ public class StorageService {
                 for (Resource resource : resources) {
                     InputStream inputStream = minioService.getObjectAsStream(resource.getUuid(), userId);
                     String resourceName = resource.getPath() + resource.getName();
-                    String entryName =  resourceName.substring(prefix.length());
+                    String entryName = resourceName.substring(prefix.length());
                     zipOut.putNextEntry(new ZipEntry(entryName));
                     StreamUtils.copy(inputStream, zipOut);
                     zipOut.closeEntry();
@@ -85,13 +107,16 @@ public class StorageService {
 
     public void deleteResource(String path, Long userId) {
         ParsedPath parsedPath = validateAndParse(path);
-        resourceMetadataService.getResourceInfo(parsedPath.path(), parsedPath.name(), userId);
 
-        String prefix = getPrefix(parsedPath);
+        if (isRootDir(parsedPath)) {
+            throw new InvalidPathException("It is forbidden to delete the root directory");
+        }
+
         if (parsedPath.isDirectory()) {
+            String prefix = getPrefix(parsedPath);
             resourceMetadataService.deleteDirectory(parsedPath, prefix, userId);
         } else {
-            resourceMetadataService.markAsDeleted(parsedPath, userId);
+            resourceMetadataService.markFileAsDeleted(parsedPath, userId);
         }
     }
 

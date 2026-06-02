@@ -5,6 +5,7 @@ import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
 import dev.yoxaron.cloudstorage.entity.ResourceType;
+import dev.yoxaron.cloudstorage.exception.InvalidPathException;
 import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.ResourceNotFoundException;
 import dev.yoxaron.cloudstorage.mapper.ResourceMapper;
@@ -14,10 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
+import static dev.yoxaron.cloudstorage.utils.PathUtil.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,19 +27,19 @@ public class ResourceMetadataService {
     private final ResourceRepository resourceRepository;
     private final ResourceMapper resourceMapper;
 
-    public Resource getResource(String path, String name, Long userId) {
-        Optional<Resource> maybeResource =
-                resourceRepository.findResourceByPathAndNameAndUserId(path, name, userId);
-
-        if (maybeResource.isEmpty()) {
-            throw new ResourceNotFoundException("Resource not found");
+    public Resource getResource(String path, String name, ResourceType type, Long userId) {
+        if (type.equals(ResourceType.FILE)) {
+            return resourceRepository
+                    .findResourceByPathAndNameAndTypeAndStatusAndUserId(path, name, type, ResourceStatus.READY, userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("File not found"));
+        } else {
+            return resourceRepository.findResourceByPathAndNameAndTypeAndUserId(path, name, type, userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Directory not found"));
         }
-
-        return maybeResource.get();
     }
 
-    public ResourceResponseDto getResourceInfo(String path, String name, Long userId) {
-        return resourceMapper.toResourceDto(getResource(path, name, userId));
+    public ResourceResponseDto getResourceInfo(String path, String name, ResourceType type, Long userId) {
+        return resourceMapper.toResourceDto(getResource(path, name, type, userId));
     }
 
     public List<Resource> getAllFilesByPrefix(String prefix, Long userId) {
@@ -53,19 +53,39 @@ public class ResourceMetadataService {
         return resources;
     }
 
-    public List<ResourceResponseDto> getDirectoryContents(String prefix, Long userId) {
-        return resourceRepository.findAllByPathAndUserId(prefix, userId).stream()
+    public boolean isFileExists(String path, String name, ResourceStatus status, Long userId) {
+        return resourceRepository.existsByPathAndNameAndTypeAndStatusAndUserId(
+                path, name, ResourceType.FILE, status, userId);
+    }
+
+    public List<ResourceResponseDto> getDirectoryContents(String path, Long userId) {
+        ParsedPath parsedPath = validateAndParseDirectory(path);
+        boolean dirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
+
+        if (!dirExists) {
+            throw new ResourceNotFoundException("Directory does not exist");
+        }
+
+        String prefix = getPrefix(parsedPath);
+
+        return resourceRepository.getDirectoryContents(prefix, ResourceStatus.READY, userId).stream()
                 .map(resourceMapper::toResourceDto)
                 .toList();
     }
 
+
     @Transactional
     public ResourceResponseDto createDirectory(ParsedPath parsedPath, Long userId) {
-        Optional<Resource> maybeResource =
-                resourceRepository.findResourceByPathAndNameAndUserId(parsedPath.path(), parsedPath.name(), userId);
+        boolean isDirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
 
-        if (maybeResource.isPresent()) {
+        if (isDirExists) {
             throw new ResourceAlreadyExistsException("Directory already exists");
+        }
+
+        if (!isRootDir(parsedPath)) {
+            upsertParentDirectories(parsedPath.path(), userId);
         }
 
         Resource directoryToSave = Resource.builder()
@@ -78,15 +98,29 @@ public class ResourceMetadataService {
         return resourceMapper.toResourceDto(resourceRepository.save(directoryToSave));
     }
 
+    private void upsertParentDirectories(String path, Long userId) {
+        Set<String> uniqueParentPaths = extractUniquePaths(path);
+        validateAndParseUniquePaths(uniqueParentPaths).stream()
+                .map(p -> Resource.builder()
+                        .path(p.path())
+                        .name(p.name())
+                        .userId(userId)
+                        .type(ResourceType.DIRECTORY)
+                        .build())
+                .filter(r -> !resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                        r.getPath(), r.getName(), ResourceType.DIRECTORY, userId))
+                .forEach(resourceRepository::save);
+    }
+
     @Transactional
     public List<Resource> upsertAllDirectories(List<ParsedPath> parsedPaths, Long userId) {
         List<Resource> createdDirectories = new ArrayList<>();
 
         for (ParsedPath parsedPath : parsedPaths) {
-            Optional<Resource> maybeDirectory =
-                    resourceRepository.findResourceByPathAndNameAndUserId(parsedPath.path(), parsedPath.name(), userId);
+            boolean dirExist = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                    parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
 
-            if (maybeDirectory.isEmpty()) {
+            if (!dirExist) {
                 Resource directoryToSave = Resource.builder()
                         .path(parsedPath.path())
                         .name(parsedPath.name())
@@ -97,6 +131,7 @@ public class ResourceMetadataService {
                 createdDirectories.add(resourceRepository.save(directoryToSave));
             }
         }
+
         return createdDirectories;
     }
 
@@ -106,13 +141,13 @@ public class ResourceMetadataService {
     }
 
     @Transactional
-    public void markAsDeleted(ParsedPath parsedPath, Long userId) {
-        Optional<Resource> maybeResource = resourceRepository.findResourceByPathAndNameAndUserId(
-                parsedPath.path(), parsedPath.name(), userId);
+    public void markFileAsDeleted(ParsedPath parsedPath, Long userId) {
+        Optional<Resource> maybeResource = resourceRepository.findResourceByPathAndNameAndTypeAndStatusAndUserId(
+                parsedPath.path(), parsedPath.name(), ResourceType.FILE, ResourceStatus.READY, userId);
 
         if (maybeResource.isPresent()) {
             Resource resource = maybeResource.get();
-            resourceRepository.updateStatus(resource.getUuid(), ResourceStatus.DELETED, userId);
+            resource.setStatus(ResourceStatus.DELETED);
         } else {
             throw new ResourceNotFoundException(
                     "Resource with path %s and name %s not found".formatted(parsedPath.path(), parsedPath.name()));
@@ -121,6 +156,13 @@ public class ResourceMetadataService {
 
     @Transactional
     public void deleteDirectory(ParsedPath parsedPath, String prefix, Long userId) {
+        boolean dirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
+
+        if (!dirExists) {
+            throw new ResourceNotFoundException("Directory does not exist");
+        }
+
         resourceRepository.deleteDirectory(parsedPath.path(), parsedPath.name(), userId);
         resourceRepository.deleteNestedDirectories(prefix, userId);
         resourceRepository.markAllFilesAsDeleted(prefix, userId);
@@ -138,19 +180,13 @@ public class ResourceMetadataService {
                 .uuid(uuid)
                 .build();
 
-        Resource savedResource = resourceRepository.save(resourceToSave);
+        Resource savedResource = resourceRepository.saveAndFlush(resourceToSave);
         return resourceMapper.toResourceDto(savedResource);
     }
 
     @Transactional
     public void updateStatuses(List<UUID> uuids, ResourceStatus status, Long userId) {
         resourceRepository.updateStatuses(uuids, status, userId);
-    }
-
-
-    @Transactional
-    public void markAsFailed(List<UUID> uuids, Long userId) {
-        resourceRepository.updateStatuses(uuids, ResourceStatus.FAILED, userId);
     }
 
     public List<ResourceResponseDto> search(String query, Long userId) {
