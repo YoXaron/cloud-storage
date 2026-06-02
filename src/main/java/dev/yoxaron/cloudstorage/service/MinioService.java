@@ -1,9 +1,11 @@
 package dev.yoxaron.cloudstorage.service;
 
 import dev.yoxaron.cloudstorage.config.MinioProperties;
+import dev.yoxaron.cloudstorage.exception.MinioException;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,14 +39,14 @@ public class MinioService {
             log.info("file {} successfully uploaded", objectName);
         } catch (Exception e) {
             log.error("minio uploading error {}", e.getMessage());
-            throw new RuntimeException("Failed to upload to minio", e); //todo
+            throw new MinioException("Failed to upload to minio: " + e.getMessage());
         }
     }
 
     public InputStream getObjectAsStream(UUID uuid, Long userId) {
-        String objectName = USER_FILES_PREFIX.formatted(userId) + uuid.toString();
-
         try {
+            String objectName = USER_FILES_PREFIX.formatted(userId) + uuid.toString();
+
             return minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(minioProperties.bucketName())
@@ -53,7 +55,23 @@ public class MinioService {
             );
         } catch (Exception e) {
             log.error("failed to receive InputStream from minio");
-            throw new RuntimeException("Failed to receive InputStream from MinIO", e);
+            throw new MinioException("Failed to receive InputStream from MinIO: " + e.getMessage());
+        }
+    }
+
+    public void deleteObject(UUID uuid, Long userId) {
+        try {
+            String objectName = USER_FILES_PREFIX.formatted(userId) + uuid.toString();
+
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(minioProperties.bucketName())
+                            .object(objectName)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Failed to delete object with UUID {}", uuid, e);
+            throw new MinioException("Failed to delete object: " + e.getMessage());
         }
     }
 }
