@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static dev.yoxaron.cloudstorage.utils.PathUtil.*;
+import static dev.yoxaron.cloudstorage.utils.PathUtil.validateAndParseDirectory;
 
 @RestController
 @RequestMapping("/api/directory")
@@ -27,11 +27,8 @@ public class DirectoryController {
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        ParsedPath parsedPath = validateAndParse(path);
-        String prefix = getPrefix(parsedPath);
-
         List<ResourceResponseDto> directoryContents =
-                resourceMetadataService.getDirectoryContents(prefix, user.getId());
+                resourceMetadataService.getDirectoryContents(path, user.getId());
 
         return ResponseEntity.ok(directoryContents);
     }

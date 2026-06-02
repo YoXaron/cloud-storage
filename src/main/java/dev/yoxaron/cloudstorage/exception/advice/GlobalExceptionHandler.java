@@ -1,8 +1,10 @@
-package dev.yoxaron.cloudstorage.controller.advice;
+package dev.yoxaron.cloudstorage.exception.advice;
 
 import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
 import dev.yoxaron.cloudstorage.exception.*;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -37,7 +39,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handleBadCredentialsException(BadCredentialsException ex) {
-        return  ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
@@ -59,7 +61,35 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
-    //todo add 404 ResourceNotFoundException
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MinioException.class)
+    public ResponseEntity<ErrorResponseDto> handleMinioException(MinioException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.warn("DataIntegrityViolationException caught in ControllerAdvice", ex);
+
+        String message = "Unique constraint violated";
+
+        Throwable cause = ex.getCause();
+        if (cause instanceof ConstraintViolationException cve) {
+            String constraintName = cve.getConstraintName();
+            if ("uq_resource_not_failed".equals(constraintName)) {
+                message = "Resource already exists";
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDto(message));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleException(Exception ex) {

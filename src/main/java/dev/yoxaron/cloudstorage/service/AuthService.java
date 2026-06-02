@@ -1,6 +1,8 @@
 package dev.yoxaron.cloudstorage.service;
 
+import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
+import dev.yoxaron.cloudstorage.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,11 +15,13 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UserService userService;
+    private final ResourceMetadataService resourceMetadataService;
     private final AuthenticationManager authenticationManager;
 
     @Transactional
     public Authentication register(UserAuthRequestDto userDto) {
-        userService.register(userDto);
+        User user = userService.register(userDto);
+        resourceMetadataService.createDirectory(new ParsedPath("/", "/", true), user.getId());
         return this.login(userDto);
     }
 
