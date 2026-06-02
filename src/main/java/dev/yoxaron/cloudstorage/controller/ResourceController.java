@@ -2,6 +2,7 @@ package dev.yoxaron.cloudstorage.controller;
 
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
+import dev.yoxaron.cloudstorage.entity.ResourceType;
 import dev.yoxaron.cloudstorage.exception.InvalidSearchQueryException;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
 import dev.yoxaron.cloudstorage.service.ResourceMetadataService;
@@ -34,9 +35,11 @@ public class ResourceController {
             @AuthenticationPrincipal SecurityUser user
     ) {
         ParsedPath parsedPath = PathUtil.validateAndParse(path);
+        ResourceType type = parsedPath.isDirectory() ? ResourceType.DIRECTORY : ResourceType.FILE;
 
         return ResponseEntity.ok()
-                .body(resourceMetadataService.getResourceInfo(parsedPath.path(), parsedPath.name(), user.getId()));
+                .body(resourceMetadataService.getResourceInfo(
+                        parsedPath.path(), parsedPath.name(), type, user.getId()));
     }
 
     @PostMapping
@@ -46,7 +49,6 @@ public class ResourceController {
             @AuthenticationPrincipal SecurityUser user
     ) {
         PathUtil.validate(path);
-
         List<ResourceResponseDto> uploadedFiles = storageService.uploadAll(path, files, user.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -98,5 +100,18 @@ public class ResourceController {
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(streamingResponseBody);
         }
+    }
+
+    @GetMapping("/move")
+    public ResponseEntity<ResourceResponseDto> move(
+            @RequestParam("from") String from,
+            @RequestParam("to") String to,
+            @AuthenticationPrincipal SecurityUser user
+    ) {
+        ParsedPath parsedPathFrom = PathUtil.validateAndParse(from);
+        ParsedPath parsedPathTo = PathUtil.validateAndParse(to);
+
+        return ResponseEntity.ok()
+                .body(storageService.moveOrRename(parsedPathFrom, parsedPathTo, user.getId()));
     }
 }

@@ -95,7 +95,19 @@ public class StorageService {
         }
     }
 
-    private List<Resource> createNewDirectories(String path, List<MultipartFile> files, Long userId) {
+    public ResourceResponseDto moveOrRename(ParsedPath parsedPathFrom, ParsedPath parsedPathTo, Long userId) {
+        if (parsedPathFrom.isDirectory() != parsedPathTo.isDirectory()) {
+            throw new InvalidPathException("Paths must both be either directories or files");
+        }
+
+        if (parsedPathFrom.isDirectory()) {
+            return resourceMetadataService.moveOrRenameDirectory(parsedPathFrom, parsedPathTo, userId);
+        } else {
+            return resourceMetadataService.moveOrRenameFile(parsedPathFrom, parsedPathTo, userId);
+        }
+    }
+
+    private List<Resource> createNewRelativeDirectories(String path, List<MultipartFile> files, Long userId) {
         List<ParsedPath> parsedPaths = extractAndValidateUniquePaths(path, files);
         return resourceMetadataService.upsertAllDirectories(parsedPaths, userId);
     }

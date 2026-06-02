@@ -63,14 +63,50 @@ public class PathUtil {
     }
 
     public static Set<String> extractUniqueFilePaths(String path, List<MultipartFile> files) {
-        Set<String> uniquePaths = new HashSet<>();
+        Set<String> uniqueFilePaths = new HashSet<>();
+
         for (MultipartFile file : files) {
-            String fileName = file.getOriginalFilename(); //todo может вернуть null
+            String fileName = file.getOriginalFilename();
+
+            if (fileName == null || fileName.isBlank()) {
+                throw new InvalidPathException("File has no original filename");
+            }
+
             String fileRelativePath = PathUtil.validateAndParse(fileName).path();
-            String fileAbsolutePath = path + fileRelativePath;
-            uniquePaths.add(fileAbsolutePath);
+            uniqueFilePaths.addAll(extractUniquePaths(path + fileRelativePath));
         }
+
+        return uniqueFilePaths;
+    }
+
+    public static Set<String> extractUniquePaths(String path) {
+        Set<String> uniquePaths = new HashSet<>();
+        uniquePaths.add("/");
+
+        String[] segments = path.split("/");
+        StringBuilder currentPath = new StringBuilder("/");
+
+        for (String segment : segments) {
+            if (segment.isBlank()) continue;
+            currentPath.append(segment).append("/");
+            uniquePaths.add(currentPath.toString());
+        }
+
+        String curr = currentPath.toString();
+        if (!curr.endsWith("/")) {
+            uniquePaths.remove(curr);
+        }
+
         return uniquePaths;
+    }
+
+    public static List<ParsedPath> validateAndParseUniquePaths(Set<String> paths) {
+        List<ParsedPath> parsedPaths = new ArrayList<>();
+        for (String path : paths) {
+            ParsedPath parsedPath = validateAndParse(path);
+            parsedPaths.add(parsedPath);
+        }
+        return parsedPaths;
     }
 
     public static String getPrefix(ParsedPath parsedPath) {
@@ -80,12 +116,7 @@ public class PathUtil {
         return parsedPath.path() + parsedPath.name() + "/";
     }
 
-    public static List<ParsedPath> validateAndParseUniquePaths(Set<String> paths) {
-        List<ParsedPath> parsedPaths = new ArrayList<>();
-        for (String path : paths) {
-            ParsedPath parsedPath = validateAndParse(path);
-            parsedPaths.add(parsedPath);//todo вызывается второй раз за метод
-        }
-        return parsedPaths;
+    public static boolean isRootDir(ParsedPath parsedPath) {
+        return parsedPath.isDirectory() && "/".equals(parsedPath.path()) && "/".equals(parsedPath.name());
     }
 }

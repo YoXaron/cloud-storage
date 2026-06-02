@@ -158,4 +158,69 @@ public class ResourceMetadataService {
                 .map(resourceMapper::toResourceDto)
                 .toList();
     }
+
+    @Transactional
+    public ResourceResponseDto moveOrRenameFile(ParsedPath parsedPathFrom, ParsedPath parsedPathTo, Long userId) {
+        Resource fileToUpdate = resourceRepository.findResourceByPathAndNameAndTypeAndUserId(
+                        parsedPathFrom.path(), parsedPathFrom.name(), ResourceType.FILE, userId)
+                .orElseThrow(() -> new InvalidPathException("Invalid path, resource does not exist"));
+
+        ParsedPath destinationDir = parse(parsedPathTo.path());
+        boolean destinationDirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                destinationDir.path(), destinationDir.name(), ResourceType.DIRECTORY, userId);
+
+        if (!destinationDirExists) {
+            throw new InvalidPathException("Destination directory does not exist");
+        }
+
+        boolean destinationFileExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                parsedPathTo.path(), parsedPathTo.name(), ResourceType.FILE, userId);
+
+        if (destinationFileExists) {
+            throw new ResourceAlreadyExistsException("Cannot update resource, " +
+                    "resource with such path and name already exists");
+        }
+
+        fileToUpdate.setPath(parsedPathTo.path());
+        fileToUpdate.setName(parsedPathTo.name());
+
+        return resourceMapper.toResourceDto(fileToUpdate);
+    }
+
+    @Transactional
+    public ResourceResponseDto moveOrRenameDirectory(ParsedPath parsedPathFrom,
+                                                     ParsedPath parsedPathTo, Long userId) {
+
+        Resource dirToUpdate = resourceRepository.findResourceByPathAndNameAndTypeAndUserId(
+                        parsedPathFrom.path(), parsedPathFrom.name(), ResourceType.DIRECTORY, userId)
+                .orElseThrow(() -> new InvalidPathException("Invalid path, resource does not exist"));
+
+        boolean destDirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                parsedPathTo.path(), parsedPathTo.name(), ResourceType.DIRECTORY, userId);
+
+        if (destDirExists) {
+            throw new ResourceAlreadyExistsException("Cannot update directory, such directory already exists");
+        }
+
+        boolean isSameDir = parsedPathFrom.path().equals(parsedPathTo.path());
+        boolean isSameName = parsedPathFrom.name().equals(parsedPathTo.name());
+
+//        if (isSameDir == isSameName) {
+//            throw new InvalidPathException("Move and rename cannot be performed simultaneously");
+//        }
+
+        dirToUpdate.setName(parsedPathTo.name());
+        dirToUpdate.setPath(parsedPathTo.path());
+
+        resourceRepository.updateNestedPaths(getPrefix(parsedPathFrom), getPrefix(parsedPathTo), userId);
+
+        return resourceMapper.toResourceDto(dirToUpdate);
+    }
+
+    public boolean isDirectoryExists(String path, Long userId) {
+        ParsedPath parsedPath = validateAndParseDirectory(path);
+
+        return resourceRepository.existsByPathAndNameAndTypeAndUserId(
+                parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
+    }
 }
