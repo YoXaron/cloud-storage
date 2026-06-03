@@ -163,9 +163,9 @@ public class ResourceMetadataService {
             throw new ResourceNotFoundException("Directory does not exist");
         }
 
-        resourceRepository.deleteDirectory(parsedPath.path(), parsedPath.name(), userId);
-        resourceRepository.deleteNestedDirectories(prefix, userId);
-        resourceRepository.markAllFilesAsDeleted(prefix, userId);
+        resourceRepository.deleteDirectory(parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
+        resourceRepository.deleteNestedDirectories(prefix, ResourceType.DIRECTORY, userId);
+        resourceRepository.markAllFilesAsDeleted(prefix, ResourceStatus.DELETED, ResourceType.FILE, userId);
     }
 
     @Transactional
@@ -190,7 +190,7 @@ public class ResourceMetadataService {
     }
 
     public List<ResourceResponseDto> search(String query, Long userId) {
-        return resourceRepository.findAllByQueryAndUserId(query, userId).stream()
+        return resourceRepository.findAllByQueryAndUserId(query, ResourceStatus.READY, userId).stream()
                 .map(resourceMapper::toResourceDto)
                 .toList();
     }

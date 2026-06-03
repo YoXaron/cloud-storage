@@ -40,9 +40,10 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     @Query("select r from Resource r " +
             "where lower(r.name) like lower(concat('%', :query, '%')) " +
-            "and r.status = 'READY' " +
+            "and (r.status = :status OR r.status IS NULL) " +
             "and r.userId = :userId")
     List<Resource> findAllByQueryAndUserId(@Param("query") String query,
+                                           @Param("status") ResourceStatus status,
                                            @Param("userId") Long userId);
 
     @Query("select r from Resource r where r.status in :statuses and r.createdAt < :threshold")
@@ -66,24 +67,28 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     @Modifying
     @Query("delete from Resource r where r.path = :path " +
             "and r.name = :name " +
-            "and r.type = 'DIRECTORY' " +
+            "and r.type = :type " +
             "and r.userId = :userId")
     void deleteDirectory(@Param("path") String path,
                          @Param("name") String name,
+                         @Param("type") ResourceType type,
                          @Param("userId") Long userId);
 
     @Modifying
     @Query("delete from Resource r where r.path like concat(:prefix, '%') " +
-            "and r.type = 'DIRECTORY' " +
+            "and r.type = :type " +
             "and r.userId = :userId")
     void deleteNestedDirectories(@Param("prefix") String prefix,
+                                 @Param("type") ResourceType type,
                                  @Param("userId") Long userId);
 
     @Modifying
-    @Query("update Resource r set r.status = 'DELETED' " +
+    @Query("update Resource r set r.status = :status " +
             "where r.path like concat(:prefix, '%') " +
-            "and r.type = 'FILE' " +
+            "and r.type = :type " +
             "and r.userId = :userId")
     void markAllFilesAsDeleted(@Param("prefix") String prefix,
+                               @Param("status") ResourceStatus status,
+                               @Param("type") ResourceType type,
                                @Param("userId") Long userId);
 }
