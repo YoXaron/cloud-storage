@@ -4,6 +4,7 @@ import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
 import dev.yoxaron.cloudstorage.entity.User;
+import dev.yoxaron.cloudstorage.repository.ResourceRepository;
 import dev.yoxaron.cloudstorage.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 import org.springframework.test.web.servlet.client.ExchangeResult;
 import org.springframework.test.web.servlet.client.RestTestClient;
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
 @Testcontainers
+@ActiveProfiles("test")
 public class AuthControllerIT {
 
     @Container
@@ -40,10 +43,14 @@ public class AuthControllerIT {
     UserRepository userRepository;
 
     @Autowired
+    ResourceRepository resourceRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void cleanUp() {
+        resourceRepository.deleteAll();
         userRepository.deleteAll();
 
         User existingUser = User.builder()
