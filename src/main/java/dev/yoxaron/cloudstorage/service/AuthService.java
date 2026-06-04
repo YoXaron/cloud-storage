@@ -1,6 +1,5 @@
 package dev.yoxaron.cloudstorage.service;
 
-import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.entity.User;
 import jakarta.transaction.Transactional;
@@ -21,7 +20,7 @@ public class AuthService {
     @Transactional
     public Authentication register(UserAuthRequestDto userDto) {
         User user = userService.register(userDto);
-        resourceMetadataService.createDirectory(new ParsedPath("/", "/", true), user.getId());
+        resourceMetadataService.createDirectory("/", user.getId());
         return this.login(userDto);
     }
 

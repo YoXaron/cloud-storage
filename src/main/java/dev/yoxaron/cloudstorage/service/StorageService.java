@@ -1,5 +1,6 @@
 package dev.yoxaron.cloudstorage.service;
 
+import dev.yoxaron.cloudstorage.dto.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
@@ -8,6 +9,7 @@ import dev.yoxaron.cloudstorage.entity.ResourceType;
 import dev.yoxaron.cloudstorage.exception.InvalidPathException;
 import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.UploadingFailedException;
+import dev.yoxaron.cloudstorage.utils.PathUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,8 @@ public class StorageService {
     private final MinioService minioService;
 
     public List<ResourceResponseDto> uploadAll(String path, List<MultipartFile> files, Long userId) {
+        validate(path);
+
         if (!resourceMetadataService.isDirectoryExists(path, userId)) {
             throw new InvalidPathException("Destination directory does not exist");
         }
@@ -81,13 +85,27 @@ public class StorageService {
         resourceMetadataService.deleteAllResources(createdDirectories);
     }
 
-    public InputStream getFileAsStream(ParsedPath parsedPath, Long userId) {
+    public DownloadResult download(String path, Long userId) {
+        ParsedPath parsedPath = validateAndParse(path);
+
+        if (parsedPath.isDirectory()) {
+            StreamingResponseBody zipStreamBody = getZipAsStream(parsedPath, userId);
+            return new DownloadResult(
+                    "attachment; filename=\"" + parsedPath.name() + ".zip\"", zipStreamBody);
+        } else {
+            StreamingResponseBody streamBody = getFileAsStream(parsedPath, userId)::transferTo;
+            return new DownloadResult(
+                    "attachment; filename=\"" + parsedPath.name() + "\"", streamBody);
+        }
+    }
+
+    private InputStream getFileAsStream(ParsedPath parsedPath, Long userId) {
         Resource resource =
                 resourceMetadataService.getResource(parsedPath.path(), parsedPath.name(), ResourceType.FILE, userId);
         return minioService.getObjectAsStream(resource.getUuid(), userId);
     }
 
-    public StreamingResponseBody getZipAsStream(ParsedPath parsedPath, Long userId) {
+    private StreamingResponseBody getZipAsStream(ParsedPath parsedPath, Long userId) {
         String prefix = getPrefix(parsedPath);
         List<Resource> resources = resourceMetadataService.getAllFilesByPrefix(prefix, userId);
 
@@ -120,7 +138,10 @@ public class StorageService {
         }
     }
 
-    public ResourceResponseDto moveOrRename(ParsedPath parsedPathFrom, ParsedPath parsedPathTo, Long userId) {
+    public ResourceResponseDto moveOrRename(String fromPath, String toPath, Long userId) {
+        ParsedPath parsedPathFrom = PathUtil.validateAndParse(fromPath);
+        ParsedPath parsedPathTo = PathUtil.validateAndParse(toPath);
+
         if (parsedPathFrom.isDirectory() != parsedPathTo.isDirectory()) {
             throw new InvalidPathException("Paths must both be either directories or files");
         }

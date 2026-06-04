@@ -22,8 +22,8 @@ public class MinioInitializer {
 
         try {
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder()
-                            .bucket(bucketName)
-                            .build());
+                    .bucket(bucketName)
+                    .build());
 
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());

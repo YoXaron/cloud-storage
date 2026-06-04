@@ -21,7 +21,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-            AuthenticationEntryPoint authenticationEntryPoint) throws Exception {
+                                                   AuthenticationEntryPoint authenticationEntryPoint) {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)

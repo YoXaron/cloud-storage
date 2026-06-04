@@ -6,10 +6,12 @@ import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
 import dev.yoxaron.cloudstorage.entity.ResourceType;
 import dev.yoxaron.cloudstorage.exception.InvalidPathException;
+import dev.yoxaron.cloudstorage.exception.InvalidSearchQueryException;
 import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.ResourceNotFoundException;
 import dev.yoxaron.cloudstorage.mapper.ResourceMapper;
 import dev.yoxaron.cloudstorage.repository.ResourceRepository;
+import dev.yoxaron.cloudstorage.utils.PathUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +40,11 @@ public class ResourceMetadataService {
         }
     }
 
-    public ResourceResponseDto getResourceInfo(String path, String name, ResourceType type, Long userId) {
-        return resourceMapper.toResourceDto(getResource(path, name, type, userId));
+    public ResourceResponseDto getResourceInfo(String path, Long userId) {
+        ParsedPath parsedPath = PathUtil.validateAndParse(path);
+        ResourceType type = parsedPath.isDirectory() ? ResourceType.DIRECTORY : ResourceType.FILE;
+
+        return resourceMapper.toResourceDto(getResource(parsedPath.path(), parsedPath.name(), type, userId));
     }
 
     public List<Resource> getAllFilesByPrefix(String prefix, Long userId) {
@@ -76,7 +81,13 @@ public class ResourceMetadataService {
 
 
     @Transactional
-    public ResourceResponseDto createDirectory(ParsedPath parsedPath, Long userId) {
+    public ResourceResponseDto createDirectory(String path, Long userId) {
+        ParsedPath parsedPath = validateAndParseDirectory(path);
+
+        if (parsedPath.path().equals("/") && parsedPath.name().equals("/")) {
+            throw new ResourceAlreadyExistsException("Root directory already exists");
+        }
+
         boolean isDirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
                 parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
 
@@ -190,6 +201,10 @@ public class ResourceMetadataService {
     }
 
     public List<ResourceResponseDto> search(String query, Long userId) {
+        if (query.isBlank()) {
+            throw new InvalidSearchQueryException("Search query must not be empty");
+        }
+
         return resourceRepository.findAllByQueryAndUserId(query, ResourceStatus.READY, userId).stream()
                 .map(resourceMapper::toResourceDto)
                 .toList();

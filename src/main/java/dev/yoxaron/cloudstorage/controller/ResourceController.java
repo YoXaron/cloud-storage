@@ -1,13 +1,10 @@
 package dev.yoxaron.cloudstorage.controller;
 
-import dev.yoxaron.cloudstorage.dto.ParsedPath;
+import dev.yoxaron.cloudstorage.dto.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
-import dev.yoxaron.cloudstorage.entity.ResourceType;
-import dev.yoxaron.cloudstorage.exception.InvalidSearchQueryException;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
 import dev.yoxaron.cloudstorage.service.ResourceMetadataService;
 import dev.yoxaron.cloudstorage.service.StorageService;
-import dev.yoxaron.cloudstorage.utils.PathUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.InputStream;
 import java.util.List;
 
 @RestController
@@ -34,12 +30,8 @@ public class ResourceController {
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        ParsedPath parsedPath = PathUtil.validateAndParse(path);
-        ResourceType type = parsedPath.isDirectory() ? ResourceType.DIRECTORY : ResourceType.FILE;
-
         return ResponseEntity.ok()
-                .body(resourceMetadataService.getResourceInfo(
-                        parsedPath.path(), parsedPath.name(), type, user.getId()));
+                .body(resourceMetadataService.getResourceInfo(path, user.getId()));
     }
 
     @PostMapping
@@ -48,11 +40,8 @@ public class ResourceController {
             @RequestParam("object") List<MultipartFile> files,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        PathUtil.validate(path);
-        List<ResourceResponseDto> uploadedFiles = storageService.uploadAll(path, files, user.getId());
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(uploadedFiles);
+                .body(storageService.uploadAll(path, files, user.getId()));
     }
 
     @DeleteMapping
@@ -69,10 +58,6 @@ public class ResourceController {
             @RequestParam("query") String query,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        if (query.isBlank()) {
-            throw new InvalidSearchQueryException("Search query must not be empty");
-        }
-
         return ResponseEntity.ok(resourceMetadataService.search(query, user.getId()));
     }
 
@@ -81,25 +66,12 @@ public class ResourceController {
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        ParsedPath parsedPath = PathUtil.validateAndParse(path);
+        DownloadResult downloadResult = storageService.download(path, user.getId());
 
-        if (parsedPath.isDirectory()) {
-            StreamingResponseBody zipStream = storageService.getZipAsStream(parsedPath, user.getId());
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + parsedPath.name() + ".zip\"")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(zipStream);
-
-        } else {
-            InputStream inputStream = storageService.getFileAsStream(parsedPath, user.getId());
-            StreamingResponseBody streamingResponseBody = inputStream::transferTo;
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + parsedPath.name() + "\"")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(streamingResponseBody);
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, downloadResult.attachmentName())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(downloadResult.body());
     }
 
     @GetMapping("/move")
@@ -108,10 +80,7 @@ public class ResourceController {
             @RequestParam("to") String to,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        ParsedPath parsedPathFrom = PathUtil.validateAndParse(from);
-        ParsedPath parsedPathTo = PathUtil.validateAndParse(to);
-
         return ResponseEntity.ok()
-                .body(storageService.moveOrRename(parsedPathFrom, parsedPathTo, user.getId()));
+                .body(storageService.moveOrRename(from, to, user.getId()));
     }
 }
