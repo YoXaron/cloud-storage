@@ -20,7 +20,7 @@ public class AuthService {
     @Transactional
     public Authentication register(UserAuthRequestDto userDto) {
         User user = userService.register(userDto);
-        resourceMetadataService.createDirectory("/", user.getId());
+        resourceMetadataService.createRootDirectoryForNewUser(user.getId());
         return this.login(userDto);
     }
 

@@ -79,6 +79,17 @@ public class ResourceMetadataService {
                 .toList();
     }
 
+    @Transactional
+    public void createRootDirectoryForNewUser(Long userId) {
+        Resource rootDir = Resource.builder()
+                .path("/")
+                .name("/")
+                .userId(userId)
+                .type(ResourceType.DIRECTORY)
+                .build();
+
+        resourceRepository.save(rootDir);
+    }
 
     @Transactional
     public ResourceResponseDto createDirectory(String path, Long userId) {
@@ -252,13 +263,6 @@ public class ResourceMetadataService {
         if (destDirExists) {
             throw new ResourceAlreadyExistsException("Cannot update directory, such directory already exists");
         }
-
-        boolean isSameDir = parsedPathFrom.path().equals(parsedPathTo.path());
-        boolean isSameName = parsedPathFrom.name().equals(parsedPathTo.name());
-
-//        if (isSameDir == isSameName) {
-//            throw new InvalidPathException("Move and rename cannot be performed simultaneously");
-//        }
 
         dirToUpdate.setName(parsedPathTo.name());
         dirToUpdate.setPath(parsedPathTo.path());
