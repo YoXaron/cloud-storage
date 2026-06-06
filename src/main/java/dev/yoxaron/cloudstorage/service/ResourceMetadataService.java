@@ -54,7 +54,6 @@ public class ResourceMetadataService {
         if (resources.isEmpty()) {
             throw new ResourceNotFoundException("Folder is empty");
         }
-
         return resources;
     }
 
@@ -73,7 +72,7 @@ public class ResourceMetadataService {
         }
 
         String prefix = getPrefix(parsedPath);
-
+        log.debug("Getting directory {}{} contents for user {}", parsedPath.path(), parsedPath.name(), userId);
         return resourceRepository.getDirectoryContents(prefix, ResourceStatus.READY, userId).stream()
                 .map(resourceMapper::toResourceDto)
                 .toList();
@@ -89,6 +88,7 @@ public class ResourceMetadataService {
                 .build();
 
         resourceRepository.save(rootDir);
+        log.info("Root directory created for user {}", userId);
     }
 
     @Transactional
@@ -117,6 +117,7 @@ public class ResourceMetadataService {
                 .type(ResourceType.DIRECTORY)
                 .build();
 
+        log.info("Directory {} created for user {}", path, userId);
         return resourceMapper.toResourceDto(resourceRepository.save(directoryToSave));
     }
 
@@ -131,6 +132,8 @@ public class ResourceMetadataService {
                         .build())
                 .filter(r -> !resourceRepository.existsByPathAndNameAndTypeAndUserId(
                         r.getPath(), r.getName(), ResourceType.DIRECTORY, userId))
+                .peek(r ->
+                        log.info("Creating parent directory {}{} for user {}", r.getPath(), r.getName(), userId))
                 .forEach(resourceRepository::save);
     }
 
@@ -143,23 +146,24 @@ public class ResourceMetadataService {
                     parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
 
             if (!dirExist) {
-                Resource directoryToSave = Resource.builder()
+                Resource dirToSave = Resource.builder()
                         .path(parsedPath.path())
                         .name(parsedPath.name())
                         .userId(userId)
                         .type(ResourceType.DIRECTORY)
                         .build();
 
-                createdDirectories.add(resourceRepository.save(directoryToSave));
+                createdDirectories.add(resourceRepository.save(dirToSave));
+                log.info("Created directory {}{} for user {}", dirToSave.getPath(), dirToSave.getName(), userId);
             }
         }
-
         return createdDirectories;
     }
 
     @Transactional
     public void deleteAllResources(List<Resource> resourcesToDelete) {
         resourceRepository.deleteAll(resourcesToDelete);
+        log.debug("Deleted {} resources", resourcesToDelete.size());
     }
 
     @Transactional
@@ -170,6 +174,7 @@ public class ResourceMetadataService {
         if (maybeResource.isPresent()) {
             Resource resource = maybeResource.get();
             resource.setStatus(ResourceStatus.DELETED);
+            log.debug("File {}{} marked as DELETED for user {}", parsedPath.path(), parsedPath.name(), userId);
         } else {
             throw new ResourceNotFoundException(
                     "Resource with path %s and name %s not found".formatted(parsedPath.path(), parsedPath.name()));
@@ -188,6 +193,7 @@ public class ResourceMetadataService {
         resourceRepository.deleteDirectory(parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
         resourceRepository.deleteNestedDirectories(prefix, ResourceType.DIRECTORY, userId);
         resourceRepository.markAllFilesAsDeleted(prefix, ResourceStatus.DELETED, ResourceType.FILE, userId);
+        log.info("Directory {}{} deleted for user {}", parsedPath.path(), parsedPath.name(), userId);
     }
 
     @Transactional
@@ -203,12 +209,14 @@ public class ResourceMetadataService {
                 .build();
 
         Resource savedResource = resourceRepository.saveAndFlush(resourceToSave);
+        log.info("Metadata saved for resource {}{} for user {}", parsedPath.path(), parsedPath.name(), userId);
         return resourceMapper.toResourceDto(savedResource);
     }
 
     @Transactional
     public void updateStatuses(List<UUID> uuids, ResourceStatus status, Long userId) {
         resourceRepository.updateStatuses(uuids, status, userId);
+        log.info("Status updated to {} for {} files, user {}", status, uuids.size(), userId);
     }
 
     public List<ResourceResponseDto> search(String query, Long userId) {
@@ -246,6 +254,9 @@ public class ResourceMetadataService {
         fileToUpdate.setPath(parsedPathTo.path());
         fileToUpdate.setName(parsedPathTo.name());
 
+        log.info("File {}{} moved/renamed to {}{} for user {}",
+                parsedPathFrom.path(), parsedPathFrom.name(), parsedPathTo.path(), parsedPathTo.name(), userId);
+
         return resourceMapper.toResourceDto(fileToUpdate);
     }
 
@@ -268,6 +279,9 @@ public class ResourceMetadataService {
         dirToUpdate.setPath(parsedPathTo.path());
 
         resourceRepository.updateNestedPaths(getPrefix(parsedPathFrom), getPrefix(parsedPathTo), userId);
+
+        log.info("Directory {}{} moved/renamed to {}{} for user {}",
+                parsedPathFrom.path(), parsedPathFrom.name(), parsedPathTo.path(), parsedPathTo.name(), userId);
 
         return resourceMapper.toResourceDto(dirToUpdate);
     }

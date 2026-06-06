@@ -43,6 +43,7 @@ public class StorageService {
             throw new InvalidPathException("Destination directory does not exist");
         }
 
+        log.info("User {} uploading {} files to {}", userId, files.size(), path);
         List<Resource> createdDirectories = createNewRelativeDirectories(path, files, userId);
 
         List<UUID> uploadingUUIDs = new ArrayList<>();
@@ -69,25 +70,30 @@ public class StorageService {
                 createdResourceDtos.add(createdResourceDto);
             }
         } catch (ResourceAlreadyExistsException e) {
+            log.warn("Upload cancelled, resource already exists for user {}: {}", userId, e.getMessage());
             rollback(uploadingUUIDs, createdDirectories, userId);
             throw e;
         } catch (Exception e) {
+            log.error("Upload failed for user {} to path {}", userId, path, e);
             rollback(uploadingUUIDs, createdDirectories, userId);
             throw new UploadingFailedException("Uploading failed: " + e.getMessage());
         }
 
         resourceMetadataService.updateStatuses(uploadingUUIDs, ResourceStatus.READY, userId);
+        log.info("User {} successfully uploaded {} files to {}", userId, files.size(), path);
         return createdResourceDtos;
     }
 
     private void rollback(List<UUID> uploadingUUIDs, List<Resource> createdDirectories, Long userId) {
         resourceMetadataService.updateStatuses(uploadingUUIDs, ResourceStatus.FAILED, userId);
         resourceMetadataService.deleteAllResources(createdDirectories);
+        log.debug("Roll back, set status FAILED for {} files, deleted {} directories for user {}",
+                uploadingUUIDs.size(), createdDirectories.size(), userId);
     }
 
     public DownloadResult download(String path, Long userId) {
         ParsedPath parsedPath = validateAndParse(path);
-
+        log.debug("User {} downloading {}", userId, path);
         if (parsedPath.isDirectory()) {
             StreamingResponseBody zipStreamBody = getZipAsStream(parsedPath, userId);
             return new DownloadResult(
@@ -136,6 +142,7 @@ public class StorageService {
         } else {
             resourceMetadataService.markFileAsDeleted(parsedPath, userId);
         }
+        log.info("Resource {} deleted for user {}", path, userId);
     }
 
     public ResourceResponseDto moveOrRename(String fromPath, String toPath, Long userId) {

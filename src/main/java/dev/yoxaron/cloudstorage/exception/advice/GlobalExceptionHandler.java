@@ -19,6 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDto> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        log.warn("User already exists: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
@@ -27,58 +28,65 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         FieldError fieldError = ex.getBindingResult().getFieldError();
         assert fieldError != null;
+        log.warn("Validation failed: {} {}", fieldError.getField(), fieldError.getDefaultMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(fieldError.getField() + ": " + fieldError.getDefaultMessage()));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponseDto> handleUnauthorizedException(UnauthorizedException ex) {
+        log.warn("Unauthorized: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handleBadCredentialsException(BadCredentialsException ex) {
+        log.warn("Bad credentials: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidPathException.class)
     public ResponseEntity<ErrorResponseDto> handleInvalidPathException(InvalidPathException ex) {
+        log.warn("Invalid path: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidSearchQueryException.class)
     public ResponseEntity<ErrorResponseDto> handleInvalidSearchQueryException(InvalidSearchQueryException ex) {
+        log.warn("Invalid search query: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDto> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex) {
+        log.warn("Resource already exists: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(MinioException.class)
     public ResponseEntity<ErrorResponseDto> handleMinioException(MinioException ex) {
+        log.error("Minio unexpected exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        log.warn("DataIntegrityViolationException caught in ControllerAdvice", ex);
+        log.warn("Data integrity violation {}", ex.getMessage());
 
         String message = "Unique constraint violated";
-
         Throwable cause = ex.getCause();
         if (cause instanceof ConstraintViolationException cve) {
             String constraintName = cve.getConstraintName();
@@ -93,7 +101,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleException(Exception ex) {
-        log.error("Exception: {}", ex.getMessage());
+        log.error("Unexpected error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponseDto(ex.getMessage()));
     }

@@ -36,9 +36,9 @@ public class MinioService {
                             .contentType(file.getContentType())
                             .build()
             );
-            log.info("file {} successfully uploaded", objectName);
+            log.info("File {} uploaded successfully for user {}", uuid, userId);
         } catch (Exception e) {
-            log.error("minio uploading error {}", e.getMessage());
+            log.error("Failed to upload file {} for user {}", uuid, userId, e);
             throw new MinioException("Failed to upload to minio: " + e.getMessage());
         }
     }
@@ -47,6 +47,7 @@ public class MinioService {
         try {
             String objectName = USER_FILES_PREFIX.formatted(userId) + uuid.toString();
 
+            log.debug("Getting object {} for user {}", uuid, userId);
             return minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(minioProperties.bucketName())
@@ -69,6 +70,7 @@ public class MinioService {
                             .object(objectName)
                             .build()
             );
+            log.info("Object {} deleted from MinIO for user {}", uuid, userId);
         } catch (Exception e) {
             log.error("Failed to delete object with UUID {}", uuid, e);
             throw new MinioException("Failed to delete object: " + e.getMessage());

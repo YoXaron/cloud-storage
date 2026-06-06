@@ -28,3 +28,10 @@ minio:
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket-name: ${MINIO_BUCKET_NAME}
+logging:
+  level:
+    root: info
+    dev.yoxaron.cloudstorage: debug
+    org.hibernate.sql: debug
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

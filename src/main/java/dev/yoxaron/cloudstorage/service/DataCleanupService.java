@@ -41,7 +41,11 @@ public class DataCleanupService {
 
     private void cleanupMinio(List<Resource> resourcesToCleanup) {
         for (Resource resource : resourcesToCleanup) {
-            minioService.deleteObject(resource.getUuid(), resource.getUserId());
+            try {
+                minioService.deleteObject(resource.getUuid(), resource.getUserId());
+            } catch (Exception e) {
+                log.error("Failed to delete object {} from Minio", resource.getUuid(), e);
+            }
         }
     }
 }
