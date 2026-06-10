@@ -10,6 +10,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Builder
+@ToString
+@EqualsAndHashCode(of = "username")
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements Serializable {
@@ -18,14 +20,10 @@ public class User implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(name = "password", nullable = false)
+    @Column(nullable = false)
+    @ToString.Exclude
     private String password;
-
-    @ToString.Include(name = "password")
-    private String maskPassword() {
-        return "********";
-    }
 }

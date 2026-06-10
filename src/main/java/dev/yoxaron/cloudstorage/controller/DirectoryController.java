@@ -1,5 +1,7 @@
 package dev.yoxaron.cloudstorage.controller;
 
+import dev.yoxaron.cloudstorage.docs.directory.CreateDirectoryDocs;
+import dev.yoxaron.cloudstorage.docs.directory.GetDirectoryDocs;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
 import dev.yoxaron.cloudstorage.service.ResourceMetadataService;
@@ -19,6 +21,7 @@ public class DirectoryController {
     private final ResourceMetadataService resourceMetadataService;
 
     @GetMapping
+    @GetDirectoryDocs
     public ResponseEntity<List<ResourceResponseDto>> getDirectory(
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
@@ -27,6 +30,7 @@ public class DirectoryController {
     }
 
     @PostMapping
+    @CreateDirectoryDocs
     public ResponseEntity<ResourceResponseDto> createDirectory(
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user

@@ -2,6 +2,7 @@ package dev.yoxaron.cloudstorage.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Resource {
@@ -19,34 +21,33 @@ public class Resource {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(nullable = false)
+    @ToString.Include
     private Long userId;
 
-    @Column(name = "path", nullable = false)
+    @Column(nullable = false)
+    @ToString.Include
     private String path;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
+    @ToString.Include
     private String name;
 
-    @Column(name = "type", nullable = false)
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @ToString.Include
     private ResourceType type;
 
-    @Column(name = "status", nullable = false)
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ResourceStatus status;
 
-    @Column(name = "size")
     private Long size;
 
-    @Column(name = "uuid")
+    @Column(unique = true)
     private UUID uuid;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
     private Instant createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        createdAt = Instant.now();
-    }
 }

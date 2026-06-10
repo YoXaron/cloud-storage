@@ -1,5 +1,8 @@
 package dev.yoxaron.cloudstorage.controller;
 
+import dev.yoxaron.cloudstorage.docs.auth.SignInDocs;
+import dev.yoxaron.cloudstorage.docs.auth.SignOutDocs;
+import dev.yoxaron.cloudstorage.docs.auth.SignUpDocs;
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
 import dev.yoxaron.cloudstorage.exception.UnauthorizedException;
@@ -32,6 +35,7 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
 
     @PostMapping("/sign-up")
+    @SignUpDocs
     public ResponseEntity<UserAuthResponseDto> signUp(
             @RequestBody @Valid UserAuthRequestDto dto,
             HttpServletRequest request,
@@ -46,6 +50,7 @@ public class AuthController {
     }
 
     @PostMapping("/sign-in")
+    @SignInDocs
     public ResponseEntity<UserAuthResponseDto> signIn(
             @RequestBody @Valid UserAuthRequestDto dto,
             HttpServletRequest request,
@@ -60,6 +65,7 @@ public class AuthController {
     }
 
     @PostMapping("/sign-out")
+    @SignOutDocs
     public ResponseEntity<Void> signOut(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

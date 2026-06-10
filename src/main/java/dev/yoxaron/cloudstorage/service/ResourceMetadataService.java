@@ -5,7 +5,6 @@ import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
 import dev.yoxaron.cloudstorage.entity.ResourceType;
-import dev.yoxaron.cloudstorage.exception.InvalidPathException;
 import dev.yoxaron.cloudstorage.exception.InvalidSearchQueryException;
 import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.ResourceNotFoundException;
@@ -68,7 +67,7 @@ public class ResourceMetadataService {
                 parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
 
         if (!dirExists) {
-            throw new ResourceNotFoundException("Directory does not exist");
+            throw new ResourceNotFoundException("Directory not found");
         }
 
         String prefix = getPrefix(parsedPath);
@@ -187,7 +186,7 @@ public class ResourceMetadataService {
                 parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
 
         if (!dirExists) {
-            throw new ResourceNotFoundException("Directory does not exist");
+            throw new ResourceNotFoundException("Directory not found");
         }
 
         resourceRepository.deleteDirectory(parsedPath.path(), parsedPath.name(), ResourceType.DIRECTORY, userId);
@@ -233,22 +232,21 @@ public class ResourceMetadataService {
     public ResourceResponseDto moveOrRenameFile(ParsedPath parsedPathFrom, ParsedPath parsedPathTo, Long userId) {
         Resource fileToUpdate = resourceRepository.findResourceByPathAndNameAndTypeAndUserId(
                         parsedPathFrom.path(), parsedPathFrom.name(), ResourceType.FILE, userId)
-                .orElseThrow(() -> new InvalidPathException("Invalid path, resource does not exist"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
 
         ParsedPath destinationDir = parse(parsedPathTo.path());
         boolean destinationDirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
                 destinationDir.path(), destinationDir.name(), ResourceType.DIRECTORY, userId);
 
         if (!destinationDirExists) {
-            throw new InvalidPathException("Destination directory does not exist");
+            throw new ResourceNotFoundException("Destination directory not found");
         }
 
         boolean destinationFileExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
                 parsedPathTo.path(), parsedPathTo.name(), ResourceType.FILE, userId);
 
         if (destinationFileExists) {
-            throw new ResourceAlreadyExistsException("Cannot update resource, " +
-                    "resource with such path and name already exists");
+            throw new ResourceAlreadyExistsException("Destination resource already exists");
         }
 
         fileToUpdate.setPath(parsedPathTo.path());
@@ -266,13 +264,13 @@ public class ResourceMetadataService {
 
         Resource dirToUpdate = resourceRepository.findResourceByPathAndNameAndTypeAndUserId(
                         parsedPathFrom.path(), parsedPathFrom.name(), ResourceType.DIRECTORY, userId)
-                .orElseThrow(() -> new InvalidPathException("Invalid path, resource does not exist"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
 
         boolean destDirExists = resourceRepository.existsByPathAndNameAndTypeAndUserId(
                 parsedPathTo.path(), parsedPathTo.name(), ResourceType.DIRECTORY, userId);
 
         if (destDirExists) {
-            throw new ResourceAlreadyExistsException("Cannot update directory, such directory already exists");
+            throw new ResourceAlreadyExistsException("Destination resource already exists");
         }
 
         dirToUpdate.setName(parsedPathTo.name());

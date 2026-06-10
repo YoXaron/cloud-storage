@@ -1,5 +1,6 @@
 package dev.yoxaron.cloudstorage.controller;
 
+import dev.yoxaron.cloudstorage.docs.user.GetCurrentUserDocs;
 import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import java.security.Principal;
 public class UserController {
 
     @GetMapping("/me")
+    @GetCurrentUserDocs
     public ResponseEntity<UserAuthResponseDto> me(Principal principal) {
         return ResponseEntity.ok(new UserAuthResponseDto(principal.getName()));
     }

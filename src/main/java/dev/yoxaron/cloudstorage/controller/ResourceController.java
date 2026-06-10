@@ -1,5 +1,6 @@
 package dev.yoxaron.cloudstorage.controller;
 
+import dev.yoxaron.cloudstorage.docs.resource.*;
 import dev.yoxaron.cloudstorage.dto.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
@@ -26,6 +27,7 @@ public class ResourceController {
     private final ResourceMetadataService resourceMetadataService;
 
     @GetMapping
+    @GetResourceInfoDocs
     public ResponseEntity<ResourceResponseDto> getResourceInfo(
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
@@ -34,7 +36,8 @@ public class ResourceController {
                 .body(resourceMetadataService.getResourceInfo(path, user.getId()));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @UploadResourceDocs
     public ResponseEntity<List<ResourceResponseDto>> uploadResources(
             @RequestParam("path") String path,
             @RequestParam("object") List<MultipartFile> files,
@@ -45,6 +48,7 @@ public class ResourceController {
     }
 
     @DeleteMapping
+    @DeleteResourceDocs
     public ResponseEntity<Void> deleteResource(
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
@@ -54,6 +58,7 @@ public class ResourceController {
     }
 
     @GetMapping("/search")
+    @SearchResourcesDocs
     public ResponseEntity<List<ResourceResponseDto>> search(
             @RequestParam("query") String query,
             @AuthenticationPrincipal SecurityUser user
@@ -62,6 +67,7 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
+    @DownloadResourceDocs
     public ResponseEntity<StreamingResponseBody> download(
             @RequestParam("path") String path,
             @AuthenticationPrincipal SecurityUser user
@@ -75,6 +81,7 @@ public class ResourceController {
     }
 
     @GetMapping("/move")
+    @MoveResourceDocs
     public ResponseEntity<ResourceResponseDto> move(
             @RequestParam("from") String from,
             @RequestParam("to") String to,
