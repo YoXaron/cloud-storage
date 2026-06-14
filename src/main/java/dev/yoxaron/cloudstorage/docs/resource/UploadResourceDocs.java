@@ -50,8 +50,9 @@ import java.lang.annotation.Target;
 
                 The destination directory specified by the path parameter must already exist.
                 
-                Max file size: 20MB
+                Max file size: 50MB
                 Max request size: 50MB
+                Max file count: 100
                 """,
         parameters = {
                 @Parameter(

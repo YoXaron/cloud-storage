@@ -14,8 +14,11 @@ spring:
     drop-first: false
   servlet:
     multipart:
-      max-file-size: 20MB
+      max-file-size: 50MB
       max-request-size: 50MB
+server:
+  tomcat:
+    max-part-count: 100
 logging:
   level:
     root: info
