@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.MediaType;
@@ -48,6 +49,9 @@ import java.lang.annotation.Target;
                 in a single request.
 
                 The destination directory specified by the path parameter must already exist.
+                
+                Max file size: 20MB
+                Max request size: 50MB
                 """,
         parameters = {
                 @Parameter(
@@ -60,7 +64,7 @@ import java.lang.annotation.Target;
                         example = "/storage/"
                 )
         },
-        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        requestBody = @RequestBody(
                 required = true,
                 content = @Content(
                         mediaType = MediaType.MULTIPART_FORM_DATA_VALUE

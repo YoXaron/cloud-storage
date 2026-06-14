@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cloud-storage-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cloud-storage-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: cloud-storage-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - cloud-storage-network
+  minio:
+    image: minio/minio
+    container_name: cloud-storage-minio
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_DEFAULT_BUCKETS: ${MINIO_BUCKET_NAME}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - cloud-storage-network
+    command: [ "server", "--console-address", ":9001", "/data" ]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend:
+    image: yoxaron/cloud-storage-api:latest
+    container_name: cloud-storage-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8080:8080"
+    networks:
+      - cloud-storage-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  frontend:
+    image: yoxaron/cloud-storage-frontend:latest
+    container_name: cloud-storage-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      BACKEND_HOST: backend
+    networks:
+      - cloud-storage-network
+    depends_on:
+      - backend
+volumes:
+  postgres_data:
+  minio_data:
+    driver: local
+networks:
+  cloud-storage-network:
+    driver: bridge
