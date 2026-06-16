@@ -1,4 +1,6 @@
 spring:
+  jpa:
+    show-sql: false
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -12,3 +14,7 @@ minio:
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket-name: ${MINIO_BUCKET_NAME}
+logging:
+  level:
+    dev.yoxaron.cloudstorage: info
+    org.hibernate.sql: info

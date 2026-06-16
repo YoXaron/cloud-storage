@@ -16,6 +16,15 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  session:
+    timeout: 60m
+    data:
+      redis:
+        namespace: cloud-storage:session
+        flush-mode: on_save
+  data:
+    redis:
+      timeout: 2s
 server:
   tomcat:
     max-part-count: 100
