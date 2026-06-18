@@ -1,8 +1,6 @@
 package dev.yoxaron.cloudstorage.controller;
 
-import dev.yoxaron.cloudstorage.docs.auth.SignInDocs;
-import dev.yoxaron.cloudstorage.docs.auth.SignOutDocs;
-import dev.yoxaron.cloudstorage.docs.auth.SignUpDocs;
+import dev.yoxaron.cloudstorage.api.AuthApi;
 import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
 import dev.yoxaron.cloudstorage.exception.UnauthorizedException;
@@ -10,7 +8,6 @@ import dev.yoxaron.cloudstorage.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,24 +17,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
-public class AuthController {
+public class AuthController implements AuthApi {
 
     private final AuthService authService;
     private final SecurityContextRepository securityContextRepository;
 
-    @PostMapping("/sign-up")
-    @SignUpDocs
+    @Override
     public ResponseEntity<UserAuthResponseDto> signUp(
-            @RequestBody @Valid UserAuthRequestDto dto,
+            UserAuthRequestDto dto,
             HttpServletRequest request,
             HttpServletResponse response
     ) {
@@ -49,10 +41,9 @@ public class AuthController {
                 .body(new UserAuthResponseDto(dto.username()));
     }
 
-    @PostMapping("/sign-in")
-    @SignInDocs
+    @Override
     public ResponseEntity<UserAuthResponseDto> signIn(
-            @RequestBody @Valid UserAuthRequestDto dto,
+            UserAuthRequestDto dto,
             HttpServletRequest request,
             HttpServletResponse response
     ) {
@@ -64,8 +55,7 @@ public class AuthController {
                 .body(new UserAuthResponseDto(dto.username()));
     }
 
-    @PostMapping("/sign-out")
-    @SignOutDocs
+    @Override
     public ResponseEntity<Void> signOut(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

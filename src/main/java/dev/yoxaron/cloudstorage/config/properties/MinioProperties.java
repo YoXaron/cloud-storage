@@ -1,4 +1,4 @@
-package dev.yoxaron.cloudstorage.config;
+package dev.yoxaron.cloudstorage.config.properties;
 
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;

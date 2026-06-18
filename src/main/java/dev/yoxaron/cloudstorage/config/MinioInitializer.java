@@ -1,5 +1,6 @@
 package dev.yoxaron.cloudstorage.config;
 
+import dev.yoxaron.cloudstorage.config.properties.MinioProperties;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;

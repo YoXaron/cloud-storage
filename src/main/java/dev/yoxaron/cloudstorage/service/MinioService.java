@@ -1,6 +1,6 @@
 package dev.yoxaron.cloudstorage.service;
 
-import dev.yoxaron.cloudstorage.config.MinioProperties;
+import dev.yoxaron.cloudstorage.config.properties.MinioProperties;
 import dev.yoxaron.cloudstorage.exception.MinioException;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;

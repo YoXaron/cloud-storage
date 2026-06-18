@@ -1,6 +1,6 @@
 package dev.yoxaron.cloudstorage.controller;
 
-import dev.yoxaron.cloudstorage.docs.resource.*;
+import dev.yoxaron.cloudstorage.api.ResourceApi;
 import dev.yoxaron.cloudstorage.dto.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.security.SecurityUser;
@@ -11,67 +11,48 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/resource")
 @RequiredArgsConstructor
-public class ResourceController {
+public class ResourceController implements ResourceApi {
 
     private final StorageService storageService;
     private final ResourceMetadataService resourceMetadataService;
 
-    @GetMapping
-    @GetResourceInfoDocs
-    public ResponseEntity<ResourceResponseDto> getResourceInfo(
-            @RequestParam("path") String path,
-            @AuthenticationPrincipal SecurityUser user
-    ) {
+    @Override
+    public ResponseEntity<ResourceResponseDto> getResourceInfo(String path, SecurityUser user) {
         return ResponseEntity.ok()
                 .body(resourceMetadataService.getResourceInfo(path, user.getId()));
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @UploadResourceDocs
+    @Override
     public ResponseEntity<List<ResourceResponseDto>> uploadResources(
-            @RequestParam("path") String path,
-            @RequestParam("object") List<MultipartFile> files,
-            @AuthenticationPrincipal SecurityUser user
+            String path,
+            List<MultipartFile> files,
+            SecurityUser user
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(storageService.uploadAll(path, files, user.getId()));
     }
 
-    @DeleteMapping
-    @DeleteResourceDocs
-    public ResponseEntity<Void> deleteResource(
-            @RequestParam("path") String path,
-            @AuthenticationPrincipal SecurityUser user
-    ) {
+    @Override
+    public ResponseEntity<Void> deleteResource(String path, SecurityUser user) {
         storageService.deleteResource(path, user.getId());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/search")
-    @SearchResourcesDocs
-    public ResponseEntity<List<ResourceResponseDto>> search(
-            @RequestParam("query") String query,
-            @AuthenticationPrincipal SecurityUser user
-    ) {
+    @Override
+    public ResponseEntity<List<ResourceResponseDto>> search(String query, SecurityUser user) {
         return ResponseEntity.ok(resourceMetadataService.search(query, user.getId()));
     }
 
-    @GetMapping("/download")
-    @DownloadResourceDocs
-    public ResponseEntity<StreamingResponseBody> download(
-            @RequestParam("path") String path,
-            @AuthenticationPrincipal SecurityUser user
-    ) {
+    @Override
+    public ResponseEntity<StreamingResponseBody> download(String path, SecurityUser user) {
         DownloadResult downloadResult = storageService.download(path, user.getId());
 
         return ResponseEntity.ok()
@@ -80,13 +61,8 @@ public class ResourceController {
                 .body(downloadResult.body());
     }
 
-    @GetMapping("/move")
-    @MoveResourceDocs
-    public ResponseEntity<ResourceResponseDto> move(
-            @RequestParam("from") String from,
-            @RequestParam("to") String to,
-            @AuthenticationPrincipal SecurityUser user
-    ) {
+    @Override
+    public ResponseEntity<ResourceResponseDto> move(String from, String to, SecurityUser user) {
         return ResponseEntity.ok()
                 .body(storageService.moveOrRename(from, to, user.getId()));
     }
