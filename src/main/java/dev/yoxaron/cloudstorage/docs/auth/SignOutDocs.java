@@ -1,7 +1,7 @@
 package dev.yoxaron.cloudstorage.docs.auth;
 
 import dev.yoxaron.cloudstorage.docs.SwaggerExamples;
-import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
+import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;

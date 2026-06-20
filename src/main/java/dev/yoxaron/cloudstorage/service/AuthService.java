@@ -1,6 +1,6 @@
 package dev.yoxaron.cloudstorage.service;
 
-import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
+import dev.yoxaron.cloudstorage.dto.request.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

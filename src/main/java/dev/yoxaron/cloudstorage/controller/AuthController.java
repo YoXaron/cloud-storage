@@ -1,8 +1,8 @@
 package dev.yoxaron.cloudstorage.controller;
 
 import dev.yoxaron.cloudstorage.api.AuthApi;
-import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
-import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
+import dev.yoxaron.cloudstorage.dto.request.UserAuthRequestDto;
+import dev.yoxaron.cloudstorage.dto.response.UserAuthResponseDto;
 import dev.yoxaron.cloudstorage.exception.UnauthorizedException;
 import dev.yoxaron.cloudstorage.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;

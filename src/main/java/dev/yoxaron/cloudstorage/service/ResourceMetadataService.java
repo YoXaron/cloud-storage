@@ -1,11 +1,10 @@
 package dev.yoxaron.cloudstorage.service;
 
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
-import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
+import dev.yoxaron.cloudstorage.dto.response.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
 import dev.yoxaron.cloudstorage.entity.ResourceType;
-import dev.yoxaron.cloudstorage.exception.InvalidSearchQueryException;
 import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.ResourceNotFoundException;
 import dev.yoxaron.cloudstorage.mapper.ResourceMapper;
@@ -219,10 +218,6 @@ public class ResourceMetadataService {
     }
 
     public List<ResourceResponseDto> search(String query, Long userId) {
-        if (query.isBlank()) {
-            throw new InvalidSearchQueryException("Search query must not be empty");
-        }
-
         return resourceRepository.findAllByQueryAndUserId(query, ResourceStatus.READY, userId).stream()
                 .map(resourceMapper::toResourceDto)
                 .toList();

@@ -1,8 +1,8 @@
 package dev.yoxaron.cloudstorage.controller;
 
-import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
-import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
-import dev.yoxaron.cloudstorage.dto.UserAuthResponseDto;
+import dev.yoxaron.cloudstorage.dto.request.UserAuthRequestDto;
+import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
+import dev.yoxaron.cloudstorage.dto.response.UserAuthResponseDto;
 import dev.yoxaron.cloudstorage.entity.User;
 import dev.yoxaron.cloudstorage.repository.ResourceRepository;
 import dev.yoxaron.cloudstorage.repository.UserRepository;

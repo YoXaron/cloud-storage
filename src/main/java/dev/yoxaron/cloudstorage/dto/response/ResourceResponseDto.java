@@ -1,4 +1,4 @@
-package dev.yoxaron.cloudstorage.dto;
+package dev.yoxaron.cloudstorage.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;

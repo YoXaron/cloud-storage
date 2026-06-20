@@ -30,9 +30,6 @@ public class PathUtil {
     }
 
     public static void validate(String path) {
-        if (path == null || path.isBlank()) {
-            throw new InvalidPathException("Path cannot be empty");
-        }
         if (!path.startsWith("/") && path.endsWith("/")) {
             throw new InvalidPathException("Path must start with '/'");
         }

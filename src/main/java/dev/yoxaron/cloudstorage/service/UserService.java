@@ -1,6 +1,6 @@
 package dev.yoxaron.cloudstorage.service;
 
-import dev.yoxaron.cloudstorage.dto.UserAuthRequestDto;
+import dev.yoxaron.cloudstorage.dto.request.UserAuthRequestDto;
 import dev.yoxaron.cloudstorage.entity.User;
 import dev.yoxaron.cloudstorage.exception.UserAlreadyExistsException;
 import dev.yoxaron.cloudstorage.repository.UserRepository;

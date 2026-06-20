@@ -1,6 +1,6 @@
 package dev.yoxaron.cloudstorage.security;
 
-import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
+import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

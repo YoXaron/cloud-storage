@@ -1,6 +1,6 @@
 package dev.yoxaron.cloudstorage.exception.advice;
 
-import dev.yoxaron.cloudstorage.dto.ErrorResponseDto;
+import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
 import dev.yoxaron.cloudstorage.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;

@@ -2,7 +2,7 @@ package dev.yoxaron.cloudstorage.service;
 
 import dev.yoxaron.cloudstorage.dto.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.ParsedPath;
-import dev.yoxaron.cloudstorage.dto.ResourceResponseDto;
+import dev.yoxaron.cloudstorage.dto.response.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
 import dev.yoxaron.cloudstorage.entity.ResourceType;
