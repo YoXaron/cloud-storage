@@ -3,7 +3,6 @@ package dev.yoxaron.cloudstorage.docs.auth;
 import dev.yoxaron.cloudstorage.docs.SwaggerExamples;
 import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
 import dev.yoxaron.cloudstorage.dto.response.UserAuthResponseDto;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,15 +16,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(
-        summary = "Register user",
-        description = """
-                Creates a new user account.
-                
-                After successful registration, the user is automatically authenticated
-                and a session cookie is created.
-                """
-)
 @ApiResponses({
         @ApiResponse(
                 responseCode = "201",
@@ -41,19 +31,6 @@ import java.lang.annotation.Target;
                 )
         ),
         @ApiResponse(
-                responseCode = "400",
-                description = "Validation error",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(
-                                implementation = ErrorResponseDto.class
-                        ),
-                        examples = @ExampleObject(
-                                value = SwaggerExamples.AUTH_VALIDATION_ERROR
-                        )
-                )
-        ),
-        @ApiResponse(
                 responseCode = "409",
                 description = "Username already exists",
                 content = @Content(
@@ -63,19 +40,6 @@ import java.lang.annotation.Target;
                         ),
                         examples = @ExampleObject(
                                 value = SwaggerExamples.USER_ALREADY_EXISTS
-                        )
-                )
-        ),
-        @ApiResponse(
-                responseCode = "500",
-                description = "Internal server error",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(
-                                implementation = ErrorResponseDto.class
-                        ),
-                        examples = @ExampleObject(
-                                value = SwaggerExamples.INTERNAL_ERROR
                         )
                 )
         )

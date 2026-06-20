@@ -1,8 +1,7 @@
-package dev.yoxaron.cloudstorage.docs.auth;
+package dev.yoxaron.cloudstorage.docs.common;
 
 import dev.yoxaron.cloudstorage.docs.SwaggerExamples;
 import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
-import dev.yoxaron.cloudstorage.dto.response.UserAuthResponseDto;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,31 +17,31 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ApiResponses({
         @ApiResponse(
-                responseCode = "200",
-                description = "User authenticated successfully",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(
-                                implementation = UserAuthResponseDto.class
-                        ),
-                        examples = @ExampleObject(
-                                value = SwaggerExamples.USER_RESPONSE
-                        )
-                )
-        ),
-        @ApiResponse(
                 responseCode = "401",
-                description = "Invalid username or password",
+                description = "User is not authenticated",
                 content = @Content(
                         mediaType = "application/json",
                         schema = @Schema(
                                 implementation = ErrorResponseDto.class
                         ),
                         examples = @ExampleObject(
-                                value = SwaggerExamples.AUTH_BAD_CREDENTIALS
+                                value = SwaggerExamples.NOT_AUTHENTICATED
+                        )
+                )
+        ),
+        @ApiResponse(
+                responseCode = "500",
+                description = "Internal server error",
+                content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(
+                                implementation = ErrorResponseDto.class
+                        ),
+                        examples = @ExampleObject(
+                                value = SwaggerExamples.INTERNAL_ERROR
                         )
                 )
         )
 })
-public @interface SignInDocs {
+public @interface CommonErrorResponses {
 }

@@ -1,10 +1,7 @@
 package dev.yoxaron.cloudstorage.docs.resource;
 
-import dev.yoxaron.cloudstorage.docs.SwaggerExamples;
 import dev.yoxaron.cloudstorage.dto.response.ErrorResponseDto;
 import dev.yoxaron.cloudstorage.dto.response.ResourceResponseDto;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -19,24 +16,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Operation(
-        summary = "Search resources",
-        description = """
-                Searches for resources by name.
-
-                The search query must be URL-encoded.
-
-                The response contains all matching files and directories for current user.
-                """,
-        parameters = {
-                @Parameter(
-                        name = "query",
-                        description = "URL-encoded search query",
-                        required = true,
-                        example = "report"
-                )
-        }
-)
 @ApiResponses({
         @ApiResponse(
                 responseCode = "200",
@@ -81,32 +60,6 @@ import java.lang.annotation.Target;
                                           "message": "Search query must not be empty"
                                         }
                                         """
-                        )
-                )
-        ),
-        @ApiResponse(
-                responseCode = "401",
-                description = "User is not authenticated",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(
-                                implementation = ErrorResponseDto.class
-                        ),
-                        examples = @ExampleObject(
-                                value = SwaggerExamples.NOT_AUTHENTICATED
-                        )
-                )
-        ),
-        @ApiResponse(
-                responseCode = "500",
-                description = "Internal server error",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(
-                                implementation = ErrorResponseDto.class
-                        ),
-                        examples = @ExampleObject(
-                                value = SwaggerExamples.INTERNAL_ERROR
                         )
                 )
         )

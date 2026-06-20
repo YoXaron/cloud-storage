@@ -1,6 +1,5 @@
 package dev.yoxaron.cloudstorage.utils;
 
-import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.exception.InvalidPathException;
 import org.springframework.web.multipart.MultipartFile;
 

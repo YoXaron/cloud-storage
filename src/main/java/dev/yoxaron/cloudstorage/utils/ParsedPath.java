@@ -1,4 +1,4 @@
-package dev.yoxaron.cloudstorage.dto;
+package dev.yoxaron.cloudstorage.utils;
 
 public record ParsedPath(
         String path,

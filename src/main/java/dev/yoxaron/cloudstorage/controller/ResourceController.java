@@ -1,7 +1,7 @@
 package dev.yoxaron.cloudstorage.controller;
 
 import dev.yoxaron.cloudstorage.api.ResourceApi;
-import dev.yoxaron.cloudstorage.dto.DownloadResult;
+import dev.yoxaron.cloudstorage.dto.internal.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.request.MoveRequestDto;
 import dev.yoxaron.cloudstorage.dto.request.ResourcePathRequestDto;
 import dev.yoxaron.cloudstorage.dto.request.SearchRequestDto;

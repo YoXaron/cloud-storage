@@ -1,6 +1,5 @@
 package dev.yoxaron.cloudstorage.service;
 
-import dev.yoxaron.cloudstorage.dto.ParsedPath;
 import dev.yoxaron.cloudstorage.dto.response.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
@@ -9,6 +8,7 @@ import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.ResourceNotFoundException;
 import dev.yoxaron.cloudstorage.mapper.ResourceMapper;
 import dev.yoxaron.cloudstorage.repository.ResourceRepository;
+import dev.yoxaron.cloudstorage.utils.ParsedPath;
 import dev.yoxaron.cloudstorage.utils.PathUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

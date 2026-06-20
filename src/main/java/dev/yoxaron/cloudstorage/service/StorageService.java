@@ -1,7 +1,6 @@
 package dev.yoxaron.cloudstorage.service;
 
-import dev.yoxaron.cloudstorage.dto.DownloadResult;
-import dev.yoxaron.cloudstorage.dto.ParsedPath;
+import dev.yoxaron.cloudstorage.dto.internal.DownloadResult;
 import dev.yoxaron.cloudstorage.dto.response.ResourceResponseDto;
 import dev.yoxaron.cloudstorage.entity.Resource;
 import dev.yoxaron.cloudstorage.entity.ResourceStatus;
@@ -9,6 +8,7 @@ import dev.yoxaron.cloudstorage.entity.ResourceType;
 import dev.yoxaron.cloudstorage.exception.InvalidPathException;
 import dev.yoxaron.cloudstorage.exception.ResourceAlreadyExistsException;
 import dev.yoxaron.cloudstorage.exception.UploadingFailedException;
+import dev.yoxaron.cloudstorage.utils.ParsedPath;
 import dev.yoxaron.cloudstorage.utils.PathUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
