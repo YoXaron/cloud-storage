@@ -30,7 +30,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     @Query("select r from Resource r where r.path = :path " +
             "and r.userId = :userId " +
-            "and (r.status = :status OR r.status IS NULL) " +
+            "and r.status = :status " +
             "and not (r.path = '/' and r.name = '/')")
     List<Resource> getDirectoryContents(@Param("path") String path,
                                         @Param("status") ResourceStatus status,
@@ -40,7 +40,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     @Query("select r from Resource r " +
             "where lower(r.name) like lower(concat('%', :query, '%')) " +
-            "and (r.status = :status OR r.status IS NULL) " +
+            "and r.status = :status " +
             "and r.userId = :userId")
     List<Resource> findAllByQueryAndUserId(@Param("query") String query,
                                            @Param("status") ResourceStatus status,

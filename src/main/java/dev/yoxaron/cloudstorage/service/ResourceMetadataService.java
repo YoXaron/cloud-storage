@@ -83,6 +83,7 @@ public class ResourceMetadataService {
                 .name("/")
                 .userId(userId)
                 .type(ResourceType.DIRECTORY)
+                .status(ResourceStatus.READY)
                 .build();
 
         resourceRepository.save(rootDir);
@@ -113,6 +114,7 @@ public class ResourceMetadataService {
                 .name(parsedPath.name())
                 .userId(userId)
                 .type(ResourceType.DIRECTORY)
+                .status(ResourceStatus.READY)
                 .build();
 
         log.info("Directory {} created for user {}", path, userId);
@@ -127,6 +129,7 @@ public class ResourceMetadataService {
                         .name(p.name())
                         .userId(userId)
                         .type(ResourceType.DIRECTORY)
+                        .status(ResourceStatus.READY)
                         .build())
                 .filter(r -> !resourceRepository.existsByPathAndNameAndTypeAndUserId(
                         r.getPath(), r.getName(), ResourceType.DIRECTORY, userId))
@@ -149,6 +152,7 @@ public class ResourceMetadataService {
                         .name(parsedPath.name())
                         .userId(userId)
                         .type(ResourceType.DIRECTORY)
+                        .status(ResourceStatus.READY)
                         .build();
 
                 createdDirectories.add(resourceRepository.save(dirToSave));

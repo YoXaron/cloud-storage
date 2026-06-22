@@ -35,6 +35,8 @@ databaseChangeLog:
               - column:
                   name: status
                   type: varchar
+                  constraints:
+                    nullable: false
               - column:
                   name: size
                   type: bigint

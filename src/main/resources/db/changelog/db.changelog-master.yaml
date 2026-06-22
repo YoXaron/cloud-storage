@@ -4,4 +4,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/002-create-resources.yaml
   - include:
-      file: db/changelog/changes/003-create-unique-partial-index-resources.yaml
+      file: db/changelog/changes/003-add-resources-unique-partial-index.yaml

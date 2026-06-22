@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-indexes-on-resources-path-name
+      author: yoxaron
+      changes:
+        - createIndex:
+            indexName: idx_resources_userid_path
+            tableName: resources
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: path
+        - createIndex:
+            indexName: idx_resources_userid_name
+            tableName: resources
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: name
